@@ -43,4 +43,4 @@ jobs:
               -e MONGODB_PASS='${{ secrets.MONGODB_PASS }}' \
               -e PORT='${{ secrets.PORT }}' \
               -e NODE_ENV='${{ secrets.NODE_ENV }}' \
-               ritik819/targafybackend:latest
+               ritik819/asset-backend:latest
