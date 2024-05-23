@@ -39,8 +39,8 @@ jobs:
       - name: Run Docker Container
         run: |
           sudo docker run -d -p 3000:3000 --name asset-backend-container \
-              -e MONGODB_USERNAME='${{secrets.MONGODB_USERNAME}}'
-              -e MONGODB_PASS='${{ secrets.MONGODB_PASS }}' \
-              -e PORT='${{ secrets.PORT }}' \
-              -e NODE_ENV='${{ secrets.NODE_ENV }}' \
-               ritik819/asset-backend:latest
+              -e MONGODB_USERNAME="${{ secrets.MONGODB_USERNAME }}" \
+              -e MONGODB_PASS="${{ secrets.MONGODB_PASS }}" \
+              -e PORT="${{ secrets.PORT }}" \
+              -e NODE_ENV="${{ secrets.NODE_ENV }}" \
+              ritik819/asset-backend:latest
