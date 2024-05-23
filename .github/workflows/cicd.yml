@@ -1,0 +1,46 @@
+name: Deploy Asset-Backend
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: "${{ secrets.DOCKER_USERNAME }}"
+          password: "${{ secrets.DOCKER_PASSWORD }}"
+
+      - name: Build Docker Image
+        run: docker build -t ritik819/asset-backend .
+
+      - name: Publish Image to Docker Hub
+        run: docker push ritik819/asset-backend:latest
+
+  deploy:
+    needs: build
+    runs-on: self-hosted
+    steps:
+      - name: Pull Image from Docker Hub
+        run: sudo docker pull ritik819/asset-backend:latest
+
+      - name: Stop and Remove Existing Container (if exists)
+        run: |
+          sudo docker stop asset-backend-container || true
+          sudo docker rm asset-backend-container || true
+
+      - name: Run Docker Container
+        run: |
+          sudo docker run -d -p 3000:3000 --name asset-backend-container \
+              -e MONGODB_USERNAME='${{secrets.MONGODB_USERNAME}}'
+              -e MONGODB_PASS='${{ secrets.MONGODB_PASS }}' \
+              -e PORT='${{ secrets.PORT }}' \
+              -e NODE_ENV='${{ secrets.NODE_ENV }}' \
+               ritik819/targafybackend:latest
