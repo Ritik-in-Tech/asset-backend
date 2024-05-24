@@ -79,8 +79,10 @@ app.use(
 );
 
 // import of all the routes
+import authRoutes from "./routes/authentication.routes";
 
 // app.use of all the imported above routes
+app.use("/api/v1/auth", authRoutes);
 
 // Information for the server
 app.get("*", (req, res) => {
