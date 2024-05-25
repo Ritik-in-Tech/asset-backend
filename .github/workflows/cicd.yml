@@ -43,4 +43,7 @@ jobs:
               -e MONGODB_PASS="${{ secrets.MONGODB_PASS }}" \
               -e PORT="${{ secrets.PORT }}" \
               -e NODE_ENV="${{ secrets.NODE_ENV }}" \
+              -e ACCESS_TOKEN_EXPIRY="${{ secrets.ACCESS_TOKEN_EXPIRY }}" \
+              -e ACCESS_TOKEN_SECRET="${{ secrets.ACCESS_TOKEN_SECRET }}" \
+              -e AUTH_KEY="${{ secrets.AUTH_KEY }}" \
               ritik819/asset-backend:latest
