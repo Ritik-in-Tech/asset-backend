@@ -2,9 +2,9 @@ import { Schema, model } from "mongoose";
 import {
   contactNumberSchema,
   commonStringConstraints,
-} from "../utils/helpers/schema.helper";
-import { AvailableUserRolesEnum } from "../utils/constant";
-import { getCurrentIndianTime } from "../utils/helpers/time.helper";
+} from "../utils/helpers/schema.helper.js";
+import { AvailableUserRolesEnum } from "../utils/constant.js";
+import { getCurrentUTCTime } from "../utils/helpers/time.helper.js";
 
 const businessUserSchema = new Schema({
   userId: {
@@ -61,7 +61,6 @@ const businessUserSchema = new Schema({
       return this.userType !== "Outsider"; // Only required if userType is not "outsider"
     },
   },
-
   activityViewCounter: {
     type: Number,
     default: 0,

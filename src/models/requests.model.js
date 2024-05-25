@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import { getCurrentIndianTime } from "../utils/helpers/time.helper";
+import { getCurrentIndianTime } from "../utils/helpers/time.helper.js";
 
 const requestSchema = new Schema({
   businessId: {
