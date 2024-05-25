@@ -1,7 +1,7 @@
-import { asyncHandler } from "../../utils/asyncHandler";
-import { User } from "../../models/user.model";
-import { BusinessUsers } from "../../models/businessusers.model";
-import { Requests } from "../../models/requests.model";
+import { asyncHandler } from "../../utils/asyncHandler.js";
+import { User } from "../../models/user.model.js";
+import { BusinessUsers } from "../../models/businessusers.model.js";
+import { Requests } from "../../models/requests.model.js";
 const getUser = asyncHandler(async (req, res, next) => {
   const userId = req?.user?._id;
 
