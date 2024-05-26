@@ -82,11 +82,13 @@ app.use(
 import authRoutes from "./routes/authentication.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import businessRoutes from "./routes/business.routes.js";
+import assetRoutes from "./routes/asset.routes.js";
 
 // app.use of all the imported above routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/business", businessRoutes);
+app.use("/api/v1/asset", assetRoutes);
 
 // Information for the server
 app.get("*", (req, res) => {
