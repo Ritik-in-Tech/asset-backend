@@ -2,6 +2,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { User } from "../../models/user.model.js";
 import { BusinessUsers } from "../../models/businessusers.model.js";
 import { Requests } from "../../models/requests.model.js";
+import { ApiResponse } from "../../utils/ApiResponse.js";
 const getUser = asyncHandler(async (req, res, next) => {
   const userId = req?.user?._id;
 
@@ -46,6 +47,7 @@ const getUser = asyncHandler(async (req, res, next) => {
       notificationViewCounter: user.notificationViewCounter,
       email: user.email,
       business: businessWithData,
+      fcmToken: user.fcmToken,
     };
     return res
       .status(200)
