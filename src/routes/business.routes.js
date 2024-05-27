@@ -3,6 +3,7 @@ import { verifyJWT } from "../middlewares/auth.middlewares.js";
 import { createBusiness } from "../controllers/business/createbusiness.controller.js";
 import { updateBusinessDetails } from "../controllers/business/updatebusiness.controller.js";
 import { joinBusiness } from "../controllers/business/joinbusiness.controller.js";
+import getBusinessRequests from "../controllers/business/getbusinessrequest.controller.js";
 const router = Router();
 
 router.use(verifyJWT);
@@ -17,4 +18,7 @@ router
 
 // join business
 router.route("/join-business/:businessCode").post(joinBusiness);
+
+// getBusiness request
+router.route("/get-business-request").get(getBusinessRequests);
 export default router;
