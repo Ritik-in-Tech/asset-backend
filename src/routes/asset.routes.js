@@ -7,7 +7,7 @@ const router = Router();
 // this verify that the authenticated user is creating asset
 router.use(verifyJWT);
 // create asset route
-router.route("/create-asset").post(createAsset);
+router.route("/create-asset/:businessId").post(createAsset);
 
 // route to get all the assets
 router.route("/get-all-assets").get(getAllAssets);
