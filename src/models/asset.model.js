@@ -5,6 +5,18 @@ import {
   commonDateConstraints,
 } from "../utils/helpers/schema.helper.js";
 
+const maintainenaceSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+    },
+    maintenanceId: { type: Schema.Types.ObjectId },
+  },
+  {
+    _id: false,
+  }
+);
 const assetSchema = new Schema({
   assetType: {
     type: String,
@@ -12,6 +24,7 @@ const assetSchema = new Schema({
     required: true,
   },
   name: commonStringConstraints,
+  capacity: commonStringConstraints,
   operatorName: commonStringConstraints,
   serialNumber: {
     type: String,
@@ -26,6 +39,7 @@ const assetSchema = new Schema({
   invoice: {
     type: String,
   },
+  maintainenace: [maintainenaceSchema],
 });
 
 const Asset = model("Assets", assetSchema);
