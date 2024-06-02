@@ -5,7 +5,7 @@ import { getAllAssets } from "../controllers/assets/getallassets.controller.js";
 
 const router = Router();
 // this verify that the authenticated user is creating asset
-router.use(verifyJWT);
+// router.use(verifyJWT);
 // create asset route
 router.route("/create-asset/:businessId").post(createAsset);
 
