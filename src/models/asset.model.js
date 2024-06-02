@@ -41,6 +41,9 @@ const assetSchema = new Schema({
     type: String,
     required: true,
   },
+  consumptionRate: {
+    type: Number,
+  },
   purchaseDate: commonDateConstraints,
   purchaseAmount: commonStringConstraints,
   expiryDate: commonDateConstraints,
