@@ -15,28 +15,11 @@ const createAsset = asyncHandler(async (req, res) => {
     const username = req.user.name;
     const businessId = req.params.businessId;
 
-    if (!userId) {
+    // Check if required fields are provided
+    if (!userId || !username || !businessId) {
       await session.abortTransaction();
       session.endSession();
-      return res
-        .status(400)
-        .json(new ApiResponse(400, {}, "Invalid token please log in again"));
-    }
-
-    if (!username) {
-      await session.abortTransaction();
-      session.endSession();
-      return res
-        .status(400)
-        .json(new ApiResponse(400, {}, "Please update profile and name there"));
-    }
-
-    if (!businessId) {
-      await session.abortTransaction();
-      session.endSession();
-      return res
-        .status(400)
-        .json(new ApiResponse(400, {}, "Please add businessId in req.params"));
+      return res.status(400).json(new ApiResponse(400, {}, "Invalid request"));
     }
 
     // Validate the user exists
@@ -71,7 +54,6 @@ const createAsset = asyncHandler(async (req, res) => {
           new ApiResponse(403, {}, "User is not associated with this business")
         );
     }
-    console.log(businessUser.role);
 
     if (businessUser.role !== "Admin" && businessUser.role !== "MiniAdmin") {
       // Check if the user does not have the required permissions
@@ -124,6 +106,24 @@ const createAsset = asyncHandler(async (req, res) => {
       return res
         .status(400)
         .json(new ApiResponse(400, {}, "Invalid asset type provided"));
+    }
+
+    // Check if asset with the same serial number exists in the business table
+    const existingAssetBySerial = business.assets.find(
+      (asset) => asset.serialNumber === serialNumber
+    );
+    if (existingAssetBySerial) {
+      await session.abortTransaction();
+      session.endSession();
+      return res
+        .status(400)
+        .json(
+          new ApiResponse(
+            400,
+            {},
+            "Asset with the same serial number already exists"
+          )
+        );
     }
 
     // Create the asset
