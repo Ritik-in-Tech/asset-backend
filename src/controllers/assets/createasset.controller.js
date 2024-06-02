@@ -11,24 +11,26 @@ const createAsset = asyncHandler(async (req, res) => {
   session.startTransaction();
 
   try {
-    const userId = req.user._id;
-    const username = req.user.name;
+    // const userId = req.user._id;
+    // const username = req.user.name;
     const businessId = req.params.businessId;
 
     // Check if required fields are provided
-    if (!userId || !username || !businessId) {
+    if (!businessId) {
       await session.abortTransaction();
       session.endSession();
-      return res.status(400).json(new ApiResponse(400, {}, "Invalid request"));
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Business Id is not provided"));
     }
 
     // Validate the user exists
-    const user = await User.findById(userId).session(session);
-    if (!user) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json(new ApiResponse(404, {}, "User not found"));
-    }
+    // const user = await User.findById(userId).session(session);
+    // if (!user) {
+    //   await session.abortTransaction();
+    //   session.endSession();
+    //   return res.status(404).json(new ApiResponse(404, {}, "User not found"));
+    // }
 
     // Validate the business exists
     const business = await Business.findById(businessId).session(session);
@@ -41,34 +43,34 @@ const createAsset = asyncHandler(async (req, res) => {
     }
 
     // Validate the user is associated with the business and check the role
-    const businessUser = await BusinessUsers.findOne({
-      userId,
-      businessId,
-    }).session(session);
-    if (!businessUser) {
-      await session.abortTransaction();
-      session.endSession();
-      return res
-        .status(403)
-        .json(
-          new ApiResponse(403, {}, "User is not associated with this business")
-        );
-    }
+    // const businessUser = await BusinessUsers.findOne({
+    //   userId,
+    //   businessId,
+    // }).session(session);
+    // if (!businessUser) {
+    //   await session.abortTransaction();
+    //   session.endSession();
+    //   return res
+    //     .status(403)
+    //     .json(
+    //       new ApiResponse(403, {}, "User is not associated with this business")
+    //     );
+    // }
 
-    if (businessUser.role !== "Admin" && businessUser.role !== "MiniAdmin") {
-      // Check if the user does not have the required permissions
-      await session.abortTransaction();
-      session.endSession();
-      return res
-        .status(403)
-        .json(
-          new ApiResponse(
-            403,
-            {},
-            "User does not have the required permissions"
-          )
-        );
-    }
+    // if (businessUser.role !== "Admin" && businessUser.role !== "MiniAdmin") {
+    //   // Check if the user does not have the required permissions
+    //   await session.abortTransaction();
+    //   session.endSession();
+    //   return res
+    //     .status(403)
+    //     .json(
+    //       new ApiResponse(
+    //         403,
+    //         {},
+    //         "User does not have the required permissions"
+    //       )
+    //     );
+    // }
 
     const {
       assetType,
@@ -76,6 +78,7 @@ const createAsset = asyncHandler(async (req, res) => {
       operatorName,
       serialNumber,
       purchaseDate,
+      consumptionRate,
       purchaseAmount,
       expiryDate,
       image,
@@ -132,6 +135,7 @@ const createAsset = asyncHandler(async (req, res) => {
       name,
       operatorName,
       serialNumber,
+      consumptionRate,
       purchaseDate,
       purchaseAmount,
       expiryDate,
