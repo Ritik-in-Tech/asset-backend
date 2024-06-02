@@ -84,6 +84,7 @@ import userRoutes from "./routes/user.routes.js";
 import businessRoutes from "./routes/business.routes.js";
 import assetRoutes from "./routes/asset.routes.js";
 import maintenaceRoutes from "./routes/maintenance.routes.js";
+import usageHistoryRoutes from "./routes/usagehistory.routes.js";
 
 // app.use of all the imported above routes
 app.use("/api/v1/auth", authRoutes);
@@ -91,6 +92,7 @@ app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/business", businessRoutes);
 app.use("/api/v1/asset", assetRoutes);
 app.use("/api/v1/maintenance", maintenaceRoutes);
+app.use("/api/v1/usage", usageHistoryRoutes);
 
 // Information for the server
 app.get("*", (req, res) => {
