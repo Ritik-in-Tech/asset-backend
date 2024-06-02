@@ -17,6 +17,17 @@ const maintainenaceSchema = new Schema(
     _id: false,
   }
 );
+
+const usageHistorySchema = new Schema(
+  {
+    usageHistoryId: {
+      type: Schema.Types.ObjectId,
+    },
+  },
+  {
+    _id: false,
+  }
+);
 const assetSchema = new Schema({
   assetType: {
     type: String,
@@ -40,6 +51,7 @@ const assetSchema = new Schema({
     type: String,
   },
   maintainenace: [maintainenaceSchema],
+  usageHistory: [usageHistorySchema],
 });
 
 const Asset = model("Assets", assetSchema);
