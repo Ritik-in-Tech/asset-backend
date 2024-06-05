@@ -46,4 +46,7 @@ jobs:
               -e ACCESS_TOKEN_EXPIRY="${{ secrets.ACCESS_TOKEN_EXPIRY }}" \
               -e ACCESS_TOKEN_SECRET="${{ secrets.ACCESS_TOKEN_SECRET }}" \
               -e AUTH_KEY="${{ secrets.AUTH_KEY }}" \
+              -e FCM_API_KEY='${{ secrets.FCM_API_KEY }}' \
+              -e AWS_ACCESS_KEY='${{secrets.AWS_ACCESS_KEY}}' \
+              -e AWS_SECRET_KEY='${{secrets.AWS_SECRET_KEY}}' \
               ritik819/asset-backend:latest
