@@ -15,6 +15,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 router.post("/upload", upload.single("document"), async (req, res, next) => {
+  console.log("POST /upload called"); // Add this line
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No document provided" });
@@ -32,6 +33,7 @@ router.post("/upload", upload.single("document"), async (req, res, next) => {
 });
 
 router.get("/documents/:documentId", async (req, res, next) => {
+  console.log("GET /documents/:documentId called"); // Add this line
   try {
     const documentId = req.params.documentId;
     if (!documentId) {
@@ -51,6 +53,7 @@ router.get("/documents/:documentId", async (req, res, next) => {
 });
 
 router.get("/download/:documentId", async (req, res, next) => {
+  console.log("GET /download/:documentId called"); // Add this line
   try {
     const documentId = req.params.documentId;
     if (!documentId) {
