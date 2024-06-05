@@ -15,7 +15,6 @@ import YAML from "yaml";
 import sdk from "api";
 const sdkInstance = sdk("@msg91api/v5.0#6n91xmlhu4pcnz");
 
-// file and directory names
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -23,16 +22,13 @@ const file = fs.readFileSync(
   path.resolve(__dirname, "../swagger.yaml"),
   "utf8"
 );
-
 const swaggerDocument = YAML.parse(file);
 
-// import of notifications and sockets
+import { initializeNotificationSocket } from "./sockets/notification_socket.js";
 
-// creating instance of the express and the server
 const app = express();
 const server = createServer(app);
 
-// allowed hosts
 const io = new Server(server, {
   cors: {
     origin: [
@@ -45,7 +41,7 @@ const io = new Server(server, {
   },
 });
 
-// initialization of the notifications and sockets
+const notificationNamespace = initializeNotificationSocket(io);
 
 // Middleware
 if (process.env.NODE_ENV === "development") {
@@ -68,8 +64,6 @@ app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express.static("public"));
 app.use(cookieParser());
-
-// session definition and initialization
 app.use(
   session({
     secret: process.env.EXPRESS_SESSION_SECRET || "your-secret-key",
@@ -78,27 +72,28 @@ app.use(
   })
 );
 
-// import of all the routes
+// Import and use all the routes
 import authRoutes from "./routes/authentication.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import businessRoutes from "./routes/business.routes.js";
 import assetRoutes from "./routes/asset.routes.js";
 import maintenaceRoutes from "./routes/maintenance.routes.js";
 import usageHistoryRoutes from "./routes/usagehistory.routes.js";
+import uploadDocumentRoutes from "./routes/upload.document.routes.js";
 
-// app.use of all the imported above routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/business", businessRoutes);
 app.use("/api/v1/asset", assetRoutes);
 app.use("/api/v1/maintenance", maintenaceRoutes);
 app.use("/api/v1/usage", usageHistoryRoutes);
+app.use("/api/v1", uploadDocumentRoutes);
 
-// Information for the server
+// Catch-all route for undefined routes
 app.get("*", (req, res) => {
   res.json({
     message:
-      "welcome to Asset Monitoring API. To see all api's please visit this url: ",
+      "Welcome to Asset Monitoring API. To see all APIs, please visit this URL: ",
   });
 });
 
