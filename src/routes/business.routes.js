@@ -5,6 +5,7 @@ import { updateBusinessDetails } from "../controllers/business/updatebusiness.co
 import { joinBusiness } from "../controllers/business/joinbusiness.controller.js";
 import getBusinessRequests from "../controllers/business/getbusinessrequest.controller.js";
 import { acceptUserJoinRequest } from "../controllers/business/acceptuserjoinrequest.controller.js";
+import { getBusinessUsers } from "../controllers/business/getbusinessusers.controller.js";
 const router = Router();
 
 router.use(verifyJWT);
@@ -25,4 +26,7 @@ router.route("/get-business-request").get(getBusinessRequests);
 
 // accept business request
 router.route("/accept-business-request").post(acceptUserJoinRequest);
+
+// businessUser
+router.route("/get-business-users/:businessId").get(getBusinessUsers);
 export default router;
