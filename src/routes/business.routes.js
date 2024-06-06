@@ -6,6 +6,8 @@ import { joinBusiness } from "../controllers/business/joinbusiness.controller.js
 import getBusinessRequests from "../controllers/business/getbusinessrequest.controller.js";
 import { acceptUserJoinRequest } from "../controllers/business/acceptuserjoinrequest.controller.js";
 import { getBusinessUsers } from "../controllers/business/getbusinessusers.controller.js";
+import { getBusinessAcceptedRequests } from "../controllers/business/getbusinessacceptedrequests.controller.js";
+import { declineUserJoinRequest } from "../controllers/business/declinejoinrequest.controller.js";
 const router = Router();
 
 router.use(verifyJWT);
@@ -31,4 +33,15 @@ router
 
 // businessUser
 router.route("/get-business-users/:businessId").get(getBusinessUsers);
+
+// get accepted businessrequest
+router
+  .route("/get-accepted-business-requests/:businessId")
+  .get(getBusinessAcceptedRequests);
+
+// decline the join request of the user
+router
+  .route("/decline-user-join-request/:businessId")
+  .post(declineUserJoinRequest);
+
 export default router;
