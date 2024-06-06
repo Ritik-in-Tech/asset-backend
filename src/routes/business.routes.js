@@ -22,10 +22,12 @@ router
 router.route("/join-business/:businessCode").post(joinBusiness);
 
 // getBusiness request
-router.route("/get-business-request").get(getBusinessRequests);
+router.route("/get-business-request/:businessId").get(getBusinessRequests);
 
 // accept business request
-router.route("/accept-business-request").post(acceptUserJoinRequest);
+router
+  .route("/accept-business-request/:businessId")
+  .post(acceptUserJoinRequest);
 
 // businessUser
 router.route("/get-business-users/:businessId").get(getBusinessUsers);
