@@ -1,41 +1,47 @@
 import mongoose from "mongoose";
-const { startSession } = mongoose;
-
 import { User } from "../../models/user.model.js";
 import { Business } from "../../models/business.model.js";
 import { BusinessUsers } from "../../models/businessusers.model.js";
 import { Requests } from "../../models/requests.model.js";
 import { Acceptedrequests } from "../../models/acceptedrequest.model.js";
-
-// Response and Error handling
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 
 const acceptUserJoinRequest = asyncHandler(async (req, res) => {
-  const { role, userId, parentId, acceptedByName } = req.body;
+  const { role, userId } = req.body;
   const businessId = req.params.businessId;
-
+  // console.log(businessId);
+  const parentId = req.user._id;
+  console.log(parentId);
+  const acceptedByName = req.user.name;
+  console.log(acceptedByName);
   try {
     // Input validation
-    if (!role || !userId || !parentId || !businessId || !acceptedByName) {
+    if (!parentId) {
+      return res
+        .status(400)
+        .json(
+          new ApiResponse(400, {}, "Token expired you have to Log in again")
+        );
+    }
+    if (!businessId) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Business Id is not found in params"));
+    }
+    if (!role || !userId || !acceptedByName) {
       return res
         .status(400)
         .json(
           new ApiResponse(
             400,
             {},
-            "Fill role, userId, parentId, businessId, and acceptedByName!!"
+            "Fill role, userId, and acceptedByName in req.body!!"
           )
         );
     }
 
-    // Check for the role if only "Operator" or "MiniAdmin" is provided
-    const availableRoles = ["Operator", "MiniAdmin"];
-    if (!availableRoles.includes(role)) {
-      return res
-        .status(400)
-        .json(new ApiResponse(400, {}, "Invalid role provided!"));
-    }
+    // console.log(role);
 
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -48,8 +54,6 @@ const acceptUserJoinRequest = asyncHandler(async (req, res) => {
       });
 
       if (!parentUser) {
-        await session.abortTransaction();
-        session.endSession();
         return res
           .status(400)
           .json(new ApiResponse(400, {}, "Parent user not found"));
@@ -159,7 +163,7 @@ const acceptUserJoinRequest = asyncHandler(async (req, res) => {
       await User.updateOne(
         { _id: userId },
         {
-          $push: { business: newBusiness },
+          $push: { businesses: newBusiness },
         },
         { session }
       );
@@ -170,6 +174,21 @@ const acceptUserJoinRequest = asyncHandler(async (req, res) => {
       );
 
       await Acceptedrequests.create(acceptedRequest);
+
+      // const emitData = {
+      //   content: `Congratulation, you are added in ${business.name} successfully🥳🥳`,
+      //   notificationCategory: "business",
+      //   createdDate: getCurrentUTCTime(),
+      //   businessName: business.name,
+      //   businessId: businessId,
+      // };
+
+      // emitNewNotificationAndAddBusinessEvent(
+      //   userId,
+      //   businessId,
+      //   emitData,
+      //   newBusiness
+      // );
 
       await session.commitTransaction();
       session.endSession();
