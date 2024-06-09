@@ -28,6 +28,30 @@ const usageHistorySchema = new Schema(
     _id: false,
   }
 );
+
+const operatorSchema = new Schema(
+  {
+    operatorName: commonStringConstraints,
+    operatorId: {
+      type: Schema.Types.ObjectId,
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
+const createdByAsset = new Schema(
+  {
+    createdByName: commonStringConstraints,
+    adminId: {
+      type: Schema.Types.ObjectId,
+    },
+  },
+  {
+    _id: false,
+  }
+);
 const assetSchema = new Schema({
   assetType: {
     type: String,
@@ -36,7 +60,7 @@ const assetSchema = new Schema({
   },
   name: commonStringConstraints,
   capacity: commonStringConstraints,
-  operatorName: commonStringConstraints,
+  operator: [operatorSchema],
   serialNumber: {
     type: String,
     required: true,
@@ -55,6 +79,7 @@ const assetSchema = new Schema({
   },
   maintainenace: [maintainenaceSchema],
   usageHistory: [usageHistorySchema],
+  createdBy: [createdByAsset],
 });
 
 const Asset = model("Assets", assetSchema);
