@@ -11,71 +11,80 @@ const createAsset = asyncHandler(async (req, res) => {
   session.startTransaction();
 
   try {
-    // const userId = req.user._id;
-    // const username = req.user.name;
-    const businessId = req.params.businessId;
+    const userId = req.user._id;
+    if (!userId) {
+      await session.abortTransaction();
+      session.endSession();
+      return res
+        .status(401) // Unauthorized, since token is invalid
+        .json(new ApiResponse(401, {}, "Invalid token! Please Log in again"));
+    }
 
-    // Check if required fields are provided
+    const username = req.user.name;
+    if (!username) {
+      await session.abortTransaction();
+      session.endSession();
+      return res
+        .status(400) // Bad Request, profile update required
+        .json(
+          new ApiResponse(
+            400,
+            {},
+            "Admin name not found! Please update profile"
+          )
+        );
+    }
+
+    const businessId = req.params.businessId;
     if (!businessId) {
       await session.abortTransaction();
       session.endSession();
       return res
-        .status(400)
+        .status(400) // Bad Request, missing business ID
         .json(new ApiResponse(400, {}, "Business Id is not provided"));
     }
 
-    // Validate the user exists
-    // const user = await User.findById(userId).session(session);
-    // if (!user) {
-    //   await session.abortTransaction();
-    //   session.endSession();
-    //   return res.status(404).json(new ApiResponse(404, {}, "User not found"));
-    // }
-
-    // Validate the business exists
     const business = await Business.findById(businessId).session(session);
     if (!business) {
       await session.abortTransaction();
       session.endSession();
       return res
-        .status(404)
+        .status(404) // Not Found, business does not exist
         .json(new ApiResponse(404, {}, "Business not found"));
     }
 
-    // Validate the user is associated with the business and check the role
-    // const businessUser = await BusinessUsers.findOne({
-    //   userId,
-    //   businessId,
-    // }).session(session);
-    // if (!businessUser) {
-    //   await session.abortTransaction();
-    //   session.endSession();
-    //   return res
-    //     .status(403)
-    //     .json(
-    //       new ApiResponse(403, {}, "User is not associated with this business")
-    //     );
-    // }
+    const businessUser = await BusinessUsers.findOne({
+      userId,
+      businessId,
+    }).session(session);
+    if (!businessUser) {
+      await session.abortTransaction();
+      session.endSession();
+      return res
+        .status(403) // Forbidden, user not associated with business
+        .json(
+          new ApiResponse(403, {}, "Admin is not associated with this business")
+        );
+    }
 
-    // if (businessUser.role !== "Admin" && businessUser.role !== "MiniAdmin") {
-    //   // Check if the user does not have the required permissions
-    //   await session.abortTransaction();
-    //   session.endSession();
-    //   return res
-    //     .status(403)
-    //     .json(
-    //       new ApiResponse(
-    //         403,
-    //         {},
-    //         "User does not have the required permissions"
-    //       )
-    //     );
-    // }
+    if (businessUser.role !== "Admin" && businessUser.role !== "MiniAdmin") {
+      await session.abortTransaction();
+      session.endSession();
+      return res
+        .status(403) // Forbidden, insufficient permissions
+        .json(
+          new ApiResponse(
+            403,
+            {},
+            "User does not have the required permissions"
+          )
+        );
+    }
 
     const {
       assetType,
       name,
-      operatorName,
+      operatorId,
       serialNumber,
       purchaseDate,
       consumptionRate,
@@ -85,20 +94,17 @@ const createAsset = asyncHandler(async (req, res) => {
       invoice,
     } = req.body;
 
-    // Define valid asset types based on the schema
     const validAssetTypes = ["Fixed", "Moving"];
-
-    // Validation checks
-    if (!assetType || !name || !serialNumber) {
+    if (!assetType || !name || !serialNumber || !operatorId) {
       await session.abortTransaction();
       session.endSession();
       return res
-        .status(400)
+        .status(400) // Bad Request, missing essential fields
         .json(
           new ApiResponse(
             400,
             {},
-            "Asset type, name, and serial number must be provided"
+            "Asset type, name, operatorId and serial number must be provided"
           )
         );
     }
@@ -107,11 +113,10 @@ const createAsset = asyncHandler(async (req, res) => {
       await session.abortTransaction();
       session.endSession();
       return res
-        .status(400)
+        .status(400) // Bad Request, invalid asset type
         .json(new ApiResponse(400, {}, "Invalid asset type provided"));
     }
 
-    // Check if asset with the same serial number exists in the business table
     const existingAssetBySerial = business.assets.find(
       (asset) => asset.serialNumber === serialNumber
     );
@@ -119,12 +124,54 @@ const createAsset = asyncHandler(async (req, res) => {
       await session.abortTransaction();
       session.endSession();
       return res
-        .status(400)
+        .status(409) // Conflict, asset with same serial number exists
+        .json(
+          new ApiResponse(
+            409,
+            {},
+            "Asset with the same serial number already exists"
+          )
+        );
+    }
+
+    const operatorUser = await User.findById(operatorId);
+    if (!operatorUser) {
+      await session.abortTransaction();
+      session.endSession();
+      return res
+        .status(404) // Not Found, operator does not exist
+        .json(
+          new ApiResponse(
+            404,
+            {},
+            "User with the provided operator ID does not exist"
+          )
+        );
+    }
+
+    const checkOperatorInBusiness = await BusinessUsers.findOne({
+      businessId: businessId,
+      userId: operatorId,
+    }).session(session);
+
+    if (!checkOperatorInBusiness) {
+      await session.abortTransaction();
+      session.endSession();
+      return res
+        .status(400) // Bad Request, operator not in same business
+        .json(new ApiResponse(400, {}, "Operator is not in the same business"));
+    }
+
+    if (checkOperatorInBusiness.role !== "Operator") {
+      await session.abortTransaction();
+      session.endSession();
+      return res
+        .status(400) // Bad Request, invalid role for operator
         .json(
           new ApiResponse(
             400,
             {},
-            "Asset with the same serial number already exists"
+            "Only operator can be assigned with any asset"
           )
         );
     }
@@ -133,7 +180,6 @@ const createAsset = asyncHandler(async (req, res) => {
     const asset = new Asset({
       assetType,
       name,
-      operatorName,
       serialNumber,
       consumptionRate,
       purchaseDate,
@@ -146,6 +192,18 @@ const createAsset = asyncHandler(async (req, res) => {
     // Save the Asset document to the database
     await asset.save({ session });
 
+    // Add operator and createdBy information to the asset
+    asset.operator.push({
+      operatorName: operatorUser.name,
+      operatorId: operatorId,
+    });
+
+    asset.createdBy.push({
+      createdByName: username,
+      adminId: userId,
+    });
+    await asset.save({ session });
+
     // Add the asset details to the business document
     business.assets.push({ name, serialNumber, assetId: asset._id });
     await business.save({ session });
@@ -154,14 +212,14 @@ const createAsset = asyncHandler(async (req, res) => {
     session.endSession();
 
     return res
-      .status(201)
+      .status(201) // Created, asset successfully created
       .json(new ApiResponse(201, { asset }, "Asset created successfully"));
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
     console.error(error);
     return res
-      .status(500)
+      .status(500) // Internal Server Error, generic failure
       .json(new ApiResponse(500, {}, "Internal Server Error"));
   }
 });
