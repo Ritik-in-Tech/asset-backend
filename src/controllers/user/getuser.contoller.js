@@ -3,6 +3,7 @@ import { User } from "../../models/user.model.js";
 import { BusinessUsers } from "../../models/businessusers.model.js";
 import { Requests } from "../../models/requests.model.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
+import { Business } from "../../models/business.model.js";
 const getUser = asyncHandler(async (req, res, next) => {
   const userId = req?.user?._id;
 
@@ -16,29 +17,42 @@ const getUser = asyncHandler(async (req, res, next) => {
 
     const businessWithData = [];
     for (const business of user.business) {
+      const businessId = business?.businessId;
       const businessUser = await BusinessUsers.findOne({
         userId: userId,
-        businessId: business?.businessId,
+        businessId: businessId,
       });
+
       let pendingRequests = 0;
-      if (businessUser.role == "Admin" || businessUser.role == "MiniAdmin") {
-        pendingRequests = await Requests.find({
-          businessId: business?.businessId,
+      if (
+        businessUser?.role === "Admin" ||
+        businessUser?.role === "MiniAdmin"
+      ) {
+        pendingRequests = await Requests.countDocuments({
+          businessId: businessId,
         });
       }
+
+      const businessInfo = await Business.findById(businessId);
+      const businessCode = businessInfo?.businessCode || "";
+
       const additionalData = {
-        pendingRequest: pendingRequests?.length || 0,
+        pendingRequest: pendingRequests || 0,
         userRole: businessUser ? businessUser?.role || "User" : "User",
         activityCounter: businessUser
           ? businessUser?.activityViewCounter || 0
           : 0,
+        businessCode: businessCode,
       };
+
       const businessData = {
-        ...business.toObject(), // Spread business data
-        ...additionalData, // Spread additional data
+        ...business.toObject(),
+        ...additionalData,
       };
+
       businessWithData.push(businessData);
     }
+
     const responseData = {
       _id: user._id,
       name: user.name,
@@ -49,6 +63,7 @@ const getUser = asyncHandler(async (req, res, next) => {
       business: businessWithData,
       fcmToken: user.fcmToken,
     };
+
     return res
       .status(200)
       .json(new ApiResponse(200, responseData, "User data"));
