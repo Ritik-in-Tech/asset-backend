@@ -16,7 +16,7 @@ const createAsset = asyncHandler(async (req, res) => {
       await session.abortTransaction();
       session.endSession();
       return res
-        .status(401) // Unauthorized, since token is invalid
+        .status(401)
         .json(new ApiResponse(401, {}, "Invalid token! Please Log in again"));
     }
 
@@ -25,7 +25,7 @@ const createAsset = asyncHandler(async (req, res) => {
       await session.abortTransaction();
       session.endSession();
       return res
-        .status(400) // Bad Request, profile update required
+        .status(400)
         .json(
           new ApiResponse(
             400,
@@ -40,7 +40,7 @@ const createAsset = asyncHandler(async (req, res) => {
       await session.abortTransaction();
       session.endSession();
       return res
-        .status(400) // Bad Request, missing business ID
+        .status(400)
         .json(new ApiResponse(400, {}, "Business Id is not provided"));
     }
 
@@ -49,7 +49,7 @@ const createAsset = asyncHandler(async (req, res) => {
       await session.abortTransaction();
       session.endSession();
       return res
-        .status(404) // Not Found, business does not exist
+        .status(404)
         .json(new ApiResponse(404, {}, "Business not found"));
     }
 
@@ -84,6 +84,7 @@ const createAsset = asyncHandler(async (req, res) => {
     const {
       assetType,
       name,
+      categoryType,
       operatorId,
       serialNumber,
       purchaseDate,
@@ -115,6 +116,24 @@ const createAsset = asyncHandler(async (req, res) => {
       return res
         .status(400) // Bad Request, invalid asset type
         .json(new ApiResponse(400, {}, "Invalid asset type provided"));
+    }
+
+    const categoryExists = business.businessCategory.some(
+      (category) => category.name.toLowerCase() === categoryType.toLowerCase()
+    );
+
+    if (!categoryExists) {
+      await session.abortTransaction();
+      session.endSession();
+      return res
+        .status(400)
+        .json(
+          new ApiResponse(
+            400,
+            {},
+            "The provided category type does not exist for this business"
+          )
+        );
     }
 
     const existingAssetBySerial = business.assets.find(
@@ -180,7 +199,9 @@ const createAsset = asyncHandler(async (req, res) => {
     const asset = new Asset({
       assetType,
       name,
+      businessId: business._id,
       serialNumber,
+      categoryType: categoryType,
       consumptionRate,
       purchaseDate,
       purchaseAmount,

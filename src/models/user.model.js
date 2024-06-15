@@ -20,6 +20,18 @@ const businessSchema = new Schema(
     _id: false,
   }
 );
+
+const officeSchema = new Schema(
+  {
+    name: commonStringConstraints,
+    officeId: {
+      type: Schema.Types.ObjectId,
+    },
+  },
+  {
+    _id: false,
+  }
+);
 const userSchema = new Schema({
   name: commonStringConstraints,
   jobTitle: commonStringConstraints,
@@ -41,6 +53,7 @@ const userSchema = new Schema({
   fcmToken: {
     type: String,
   },
+  offices: [officeSchema],
 });
 
 const User = model("Users", userSchema);
