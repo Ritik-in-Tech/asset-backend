@@ -53,6 +53,18 @@ const createdByAsset = new Schema(
   }
 );
 
+const officeAssignedSchema = new Schema(
+  {
+    name: commonStringConstraints,
+    officeId: {
+      type: Schema.Types.ObjectId,
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
 const assetSchema = new Schema({
   assetType: {
     type: String,
@@ -88,6 +100,8 @@ const assetSchema = new Schema({
   maintainenace: [maintainenaceSchema],
   usageHistory: [usageHistorySchema],
   createdBy: [createdByAsset],
+  officeAssigned: [officeAssignedSchema],
+  typeAsset: commonStringConstraints,
 });
 
 const Asset = model("Assets", assetSchema);
