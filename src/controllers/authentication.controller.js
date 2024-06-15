@@ -52,18 +52,69 @@ const verifyloginOTP = asyncHandler(async (req, res) => {
       number == "9999999999" ||
       number == "9111111111"
     ) {
+      if (number == "1111111111" && otp !== "1111") {
+        return res
+          .status(400)
+          .json(new ApiResponse(400, {}, "Please enter correct test otp"));
+      }
+      if (number == "2222222222" && otp !== "2222") {
+        return res
+          .status(400)
+          .json(new ApiResponse(400, {}, "Please enter correct test otp"));
+      }
+      if (number == "3333333333" && otp !== "3333") {
+        return res
+          .status(400)
+          .json(new ApiResponse(400, {}, "Please enter correct test otp"));
+      }
+      if (number == "4444444444" && otp !== "4444") {
+        return res
+          .status(400)
+          .json(new ApiResponse(400, {}, "Please enter correct test otp"));
+      }
+      if (number == "5555555555" && otp !== "5555") {
+        return res
+          .status(400)
+          .json(new ApiResponse(400, {}, "Please enter correct test otp"));
+      }
+      if (number == "6666666666" && otp !== "6666") {
+        return res
+          .status(400)
+          .json(new ApiResponse(400, {}, "Please enter correct test otp"));
+      }
+      if (number == "7777777777" && otp !== "7777") {
+        return res
+          .status(400)
+          .json(new ApiResponse(400, {}, "Please enter correct test otp"));
+      }
+      if (number == "8888888888" && otp !== "8888") {
+        return res
+          .status(400)
+          .json(new ApiResponse(400, {}, "Please enter correct test otp"));
+      }
+      if (number == "9999999999" && otp !== "9999") {
+        return res
+          .status(400)
+          .json(new ApiResponse(400, {}, "Please enter correct test otp"));
+      }
       let user = await User.findOne({
         "contactNumber.countryCode": countryCode,
         "contactNumber.number": number,
       });
       if (!user) {
-        return res.status(404).json(new ApiResponse(404, {}, "User Not Found"));
+        user = await User.create({
+          name: "test",
+          contactNumber: {
+            countryCode: countryCode,
+            number: number,
+          },
+        });
       }
 
       const userDetails = {
         _id: user?._id,
         contactNumber: user?.contactNumber,
-        name: user?.name,
+        name: user?.name == "" ? "test" : user?.name,
       };
 
       const authToken = jwt.sign(
@@ -73,7 +124,7 @@ const verifyloginOTP = asyncHandler(async (req, res) => {
       );
       return res
         .status(200)
-        .json(new ApiResponse(200, { authToken }, "Login successfully"));
+        .json(new ApiResponse(200, { authToken }, "Logged in successfully"));
     }
 
     let phoneNumWithCountryCode = `${countryCode}${number}`;
