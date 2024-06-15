@@ -35,6 +35,7 @@ const getUser = asyncHandler(async (req, res, next) => {
 
       const businessInfo = await Business.findById(businessId);
       const businessCode = businessInfo?.businessCode || "";
+      const businessCategories = businessInfo?.businessCategory;
 
       const additionalData = {
         pendingRequest: pendingRequests || 0,
@@ -43,6 +44,7 @@ const getUser = asyncHandler(async (req, res, next) => {
           ? businessUser?.activityViewCounter || 0
           : 0,
         businessCode: businessCode,
+        businessCategories: businessCategories,
       };
 
       const businessData = {
