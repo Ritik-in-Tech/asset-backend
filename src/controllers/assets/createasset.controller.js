@@ -5,6 +5,7 @@ import { Business } from "../../models/business.model.js";
 import { BusinessUsers } from "../../models/businessusers.model.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import mongoose from "mongoose";
+import { Office } from "../../models/office.model.js";
 
 const createAsset = asyncHandler(async (req, res) => {
   const session = await mongoose.startSession();
@@ -83,6 +84,7 @@ const createAsset = asyncHandler(async (req, res) => {
 
     const {
       assetType,
+      typeAsset,
       name,
       categoryType,
       operatorId,
@@ -93,10 +95,18 @@ const createAsset = asyncHandler(async (req, res) => {
       expiryDate,
       image,
       invoice,
+      officeIds,
     } = req.body;
 
     const validAssetTypes = ["Fixed", "Moving"];
-    if (!assetType || !name || !serialNumber || !operatorId) {
+    if (
+      !assetType ||
+      !name ||
+      !serialNumber ||
+      !operatorId ||
+      !typeAsset ||
+      !officeIds
+    ) {
       await session.abortTransaction();
       session.endSession();
       return res
@@ -195,9 +205,31 @@ const createAsset = asyncHandler(async (req, res) => {
         );
     }
 
+    const officeAssigned = [];
+
+    for (const officeId of officeIds) {
+      const office = await Office.findOne({ _id: officeId }).session(session);
+      if (!office) {
+        await session.abortTransaction();
+        session.endSession();
+        return res
+          .status(400)
+          .json(
+            new ApiResponse(
+              400,
+              {},
+              `Office with id ${officeId} does not exist`
+            )
+          );
+      }
+      // validOfficeIds.push(office._id);
+      officeAssigned.push({ officeId: office._id, name: office.officeName });
+    }
+
     // Create the asset
     const asset = new Asset({
       assetType,
+      typeAsset,
       name,
       businessId: business._id,
       serialNumber,
@@ -208,6 +240,7 @@ const createAsset = asyncHandler(async (req, res) => {
       expiryDate,
       image,
       invoice,
+      officeAssigned: officeAssigned,
     });
 
     // Save the Asset document to the database
