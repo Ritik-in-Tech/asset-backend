@@ -10,7 +10,14 @@ const createBusiness = asyncHandler(async (req, res) => {
   const session = await startSession();
   session.startTransaction();
   try {
-    const { buisnessName, logo, industryType, city, country } = req.body;
+    const {
+      buisnessName,
+      logo,
+      industryType,
+      city,
+      country,
+      businessCategory,
+    } = req.body;
 
     // Validation: Check if admin name and contact number are provided
     const adminId = req.user._id;
@@ -40,6 +47,10 @@ const createBusiness = asyncHandler(async (req, res) => {
     const existingCodes = new Set(await Business.distinct("businessCode"));
 
     const businessCode = generateUniqueCode(existingCodes);
+    const businessCategories = [];
+    for (const category of businessCategory) {
+      businessCategories.push({ name: category });
+    }
 
     const business = await Business.create(
       [
@@ -48,8 +59,9 @@ const createBusiness = asyncHandler(async (req, res) => {
           name: buisnessName,
           industryType: industryType,
           city: city,
-          logo: logo,
+          logo: logo || "",
           country: country,
+          businessCategory: businessCategories,
         },
       ],
       { session: session }

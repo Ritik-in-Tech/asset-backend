@@ -61,4 +61,39 @@ const getAllOperatorsList = asyncHandler(async (req, res) => {
   }
 });
 
-export { getAllOperatorsList };
+const getCategoryList = asyncHandler(async (req, res) => {
+  try {
+    const businessId = req.params.businessId;
+    if (!businessId) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Please provide businessId in params"));
+    }
+    const business = await Business.findById(businessId);
+    if (!business) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Business does not exist"));
+    }
+    const categoryList = business.businessCategory.map((category) => ({
+      name: category.name,
+    }));
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          { categoryList },
+          "Available categories fetched successfully!"
+        )
+      );
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json(new ApiResponse(500, { error }, "Internal server error"));
+  }
+});
+
+export { getAllOperatorsList, getCategoryList };

@@ -52,16 +52,24 @@ const createdByAsset = new Schema(
     _id: false,
   }
 );
+
 const assetSchema = new Schema({
   assetType: {
     type: String,
     enum: ["Fixed", "Moving"],
     required: true,
   },
+  businessId: {
+    type: Schema.Types.ObjectId,
+  },
   name: commonStringConstraints,
   capacity: commonStringConstraints,
   operator: [operatorSchema],
   serialNumber: {
+    type: String,
+    required: true,
+  },
+  categoryType: {
     type: String,
     required: true,
   },

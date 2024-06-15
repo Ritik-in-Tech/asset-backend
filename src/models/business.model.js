@@ -13,6 +13,28 @@ const assetSchema = new Schema(
     _id: false,
   }
 );
+
+const officeSchema = new Schema(
+  {
+    name: commonStringConstraints,
+    officeId: {
+      type: Schema.Types.ObjectId,
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
+const businessCategories = new Schema(
+  {
+    name: commonStringConstraints,
+  },
+  {
+    _id: false,
+  }
+);
+
 const businessSchema = new Schema({
   businessCode: {
     type: String,
@@ -33,6 +55,7 @@ const businessSchema = new Schema({
   industryType: commonStringConstraints,
   city: commonStringConstraints,
   country: commonStringConstraints,
+  businessCategory: [businessCategories],
   targets: [
     {
       type: Schema.Types.ObjectId,
@@ -40,6 +63,7 @@ const businessSchema = new Schema({
     },
   ],
   assets: [assetSchema],
+  offices: [officeSchema],
 });
 
 const Business = model("Business", businessSchema);
