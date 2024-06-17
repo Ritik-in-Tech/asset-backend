@@ -17,6 +17,7 @@ const createBusiness = asyncHandler(async (req, res) => {
       city,
       country,
       businessCategory,
+      assetCategory,
     } = req.body;
 
     // Validation: Check if admin name and contact number are provided
@@ -52,6 +53,11 @@ const createBusiness = asyncHandler(async (req, res) => {
       businessCategories.push({ name: category });
     }
 
+    const assetCategories = [];
+    for (const asset of assetCategory) {
+      assetCategories.push({ name: asset });
+    }
+
     const business = await Business.create(
       [
         {
@@ -62,6 +68,7 @@ const createBusiness = asyncHandler(async (req, res) => {
           logo: logo || "",
           country: country,
           businessCategory: businessCategories,
+          assetCategory: assetCategories,
         },
       ],
       { session: session }
