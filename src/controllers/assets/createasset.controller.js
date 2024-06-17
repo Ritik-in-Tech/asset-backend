@@ -72,7 +72,7 @@ const createAsset = asyncHandler(async (req, res) => {
       await session.abortTransaction();
       session.endSession();
       return res
-        .status(403) // Forbidden, insufficient permissions
+        .status(403)
         .json(
           new ApiResponse(
             403,
@@ -142,6 +142,24 @@ const createAsset = asyncHandler(async (req, res) => {
             400,
             {},
             "The provided category type does not exist for this business"
+          )
+        );
+    }
+
+    const typeAssetExists = business.assetCategory.some(
+      (asset) => asset.name.toLowerCase() === typeAsset.toLowerCase()
+    );
+
+    if (!typeAssetExists) {
+      await session.abortTransaction();
+      session.endSession();
+      return res
+        .status(400)
+        .json(
+          new ApiResponse(
+            400,
+            {},
+            "The provided asset type does not exist for this business"
           )
         );
     }
