@@ -11,10 +11,10 @@ const createBusiness = asyncHandler(async (req, res) => {
   session.startTransaction();
   try {
     const {
-      buisnessName,
+      businessName, // corrected typo: 'buisnessName' to 'businessName'
       logo,
       industryType,
-      city,
+      cityOffices, // updated to accept cityOffices structure
       country,
       businessCategory,
       assetCategory,
@@ -24,9 +24,7 @@ const createBusiness = asyncHandler(async (req, res) => {
     const adminId = req.user._id;
     const adminName = req.user.name;
     const adminContactNumber = req.user.contactNumber;
-    // console.log(adminId);
-    // console.log(adminName);
-    // console.log(adminContactNumber);
+
     if (!adminName) {
       return res
         .status(400)
@@ -39,32 +37,47 @@ const createBusiness = asyncHandler(async (req, res) => {
         .json(new ApiResponse(400, {}, "Token is Invalid!!"));
     }
 
-    if (!buisnessName) {
+    if (!businessName) {
       return res
         .status(400)
         .json(new ApiResponse(400, {}, "Fill name of business!!"));
     }
 
+    if (!Array.isArray(cityOffices)) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "cityOffices must be an array"));
+    }
     const existingCodes = new Set(await Business.distinct("businessCode"));
-
     const businessCode = generateUniqueCode(existingCodes);
-    const businessCategories = [];
-    for (const category of businessCategory) {
-      businessCategories.push({ name: category });
-    }
 
-    const assetCategories = [];
-    for (const asset of assetCategory) {
-      assetCategories.push({ name: asset });
-    }
+    // Convert businessCategory and assetCategory into schema-compatible format
+    const businessCategories = businessCategory.map((category) => ({
+      name: category,
+    }));
+    const assetCategories = assetCategory.map((asset) => ({ name: asset }));
 
+    // Format cityOffices to match the new schema
+    const formattedCityOffices = cityOffices.map((cityOffice) => {
+      if (!Array.isArray(cityOffice) || cityOffice.length < 2) {
+        throw new Error(
+          "Each cityOffices entry must be an array with at least one city and one office"
+        );
+      }
+      return {
+        city: cityOffice[0],
+        offices: cityOffice.slice(1),
+      };
+    });
+
+    // Create the new business entry
     const business = await Business.create(
       [
         {
           businessCode: businessCode,
-          name: buisnessName,
+          name: businessName,
           industryType: industryType,
-          city: city,
+          cityOffices: formattedCityOffices, // use the new cityOffices format
           logo: logo || "",
           country: country,
           businessCategory: businessCategories,
@@ -87,14 +100,16 @@ const createBusiness = asyncHandler(async (req, res) => {
       groupsJoined: [],
     };
 
+    // Create business user entry
     await BusinessUsers.create([adminInfo], { session: session });
 
+    // Update the user's business information
     const result = await User.updateOne(
       { _id: adminId },
       {
         $push: {
           business: {
-            name: buisnessName,
+            name: businessName,
             businessId: business[0]._id,
             userType: "Insider",
           },

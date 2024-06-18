@@ -1,6 +1,7 @@
 import { Schema, model } from "mongoose";
 import { commonStringConstraints } from "../utils/helpers/schema.helper.js";
 
+// Schema for individual assets
 const assetSchema = new Schema(
   {
     name: commonStringConstraints,
@@ -14,19 +15,8 @@ const assetSchema = new Schema(
   }
 );
 
-const officeSchema = new Schema(
-  {
-    name: commonStringConstraints,
-    officeId: {
-      type: Schema.Types.ObjectId,
-    },
-  },
-  {
-    _id: false,
-  }
-);
-
-const businessCategories = new Schema(
+// Schema for business categories
+const businessCategoriesSchema = new Schema(
   {
     name: commonStringConstraints,
   },
@@ -35,6 +25,7 @@ const businessCategories = new Schema(
   }
 );
 
+// Schema for asset categories
 const assetCategoriesSchema = new Schema(
   {
     name: commonStringConstraints,
@@ -44,6 +35,17 @@ const assetCategoriesSchema = new Schema(
   }
 );
 
+const cityOfficesSchema = new Schema(
+  {
+    city: commonStringConstraints,
+    offices: [commonStringConstraints],
+  },
+  {
+    _id: false,
+  }
+);
+
+// Main business schema
 const businessSchema = new Schema({
   businessCode: {
     type: String,
@@ -62,9 +64,8 @@ const businessSchema = new Schema({
     type: String,
   },
   industryType: commonStringConstraints,
-  city: commonStringConstraints,
   country: commonStringConstraints,
-  businessCategory: [businessCategories],
+  businessCategory: [businessCategoriesSchema],
   targets: [
     {
       type: Schema.Types.ObjectId,
@@ -72,7 +73,7 @@ const businessSchema = new Schema({
     },
   ],
   assets: [assetSchema],
-  offices: [officeSchema],
+  cityOffices: [cityOfficesSchema],
   assetCategory: [assetCategoriesSchema],
 });
 
