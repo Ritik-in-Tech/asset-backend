@@ -84,29 +84,21 @@ const createAsset = asyncHandler(async (req, res) => {
 
     const {
       assetType,
-      typeAsset,
+      equipmentType,
       name,
-      categoryType,
+      consumptionType,
       operatorId,
-      serialNumber,
+      modelNumber,
       purchaseDate,
       consumptionRate,
       purchaseAmount,
       expiryDate,
       image,
       invoice,
-      officeIds,
     } = req.body;
 
     const validAssetTypes = ["Fixed", "Moving"];
-    if (
-      !assetType ||
-      !name ||
-      !serialNumber ||
-      !operatorId ||
-      !typeAsset ||
-      !officeIds
-    ) {
+    if (!assetType || !name || !modelNumber || !operatorId || !equipmentType) {
       await session.abortTransaction();
       session.endSession();
       return res
@@ -115,7 +107,7 @@ const createAsset = asyncHandler(async (req, res) => {
           new ApiResponse(
             400,
             {},
-            "Asset type, name, operatorId and serial number must be provided"
+            "Asset type, name, operatorId and modelNumber must be provided"
           )
         );
     }
@@ -129,7 +121,8 @@ const createAsset = asyncHandler(async (req, res) => {
     }
 
     const categoryExists = business.businessCategory.some(
-      (category) => category.name.toLowerCase() === categoryType.toLowerCase()
+      (category) =>
+        category.name.toLowerCase() === consumptionType.toLowerCase()
     );
 
     if (!categoryExists) {
@@ -146,11 +139,11 @@ const createAsset = asyncHandler(async (req, res) => {
         );
     }
 
-    const typeAssetExists = business.assetCategory.some(
-      (asset) => asset.name.toLowerCase() === typeAsset.toLowerCase()
+    const eqipmentTypeExists = business.assetCategory.some(
+      (asset) => asset.name.toLowerCase() === equipmentType.toLowerCase()
     );
 
-    if (!typeAssetExists) {
+    if (!eqipmentTypeExists) {
       await session.abortTransaction();
       session.endSession();
       return res
@@ -164,10 +157,10 @@ const createAsset = asyncHandler(async (req, res) => {
         );
     }
 
-    const existingAssetBySerial = business.assets.find(
-      (asset) => asset.serialNumber === serialNumber
+    const existingAssetByModel = business.assets.find(
+      (asset) => asset.modelNumber === modelNumber
     );
-    if (existingAssetBySerial) {
+    if (existingAssetByModel) {
       await session.abortTransaction();
       session.endSession();
       return res
@@ -176,7 +169,7 @@ const createAsset = asyncHandler(async (req, res) => {
           new ApiResponse(
             409,
             {},
-            "Asset with the same serial number already exists"
+            "Asset with the same model number already exists"
           )
         );
     }
@@ -223,42 +216,41 @@ const createAsset = asyncHandler(async (req, res) => {
         );
     }
 
-    const officeAssigned = [];
+    // const officeAssigned = [];
 
-    for (const officeId of officeIds) {
-      const office = await Office.findOne({ _id: officeId }).session(session);
-      if (!office) {
-        await session.abortTransaction();
-        session.endSession();
-        return res
-          .status(400)
-          .json(
-            new ApiResponse(
-              400,
-              {},
-              `Office with id ${officeId} does not exist`
-            )
-          );
-      }
-      // validOfficeIds.push(office._id);
-      officeAssigned.push({ officeId: office._id, name: office.officeName });
-    }
+    // for (const officeId of officeIds) {
+    //   const office = await Office.findOne({ _id: officeId }).session(session);
+    //   if (!office) {
+    //     await session.abortTransaction();
+    //     session.endSession();
+    //     return res
+    //       .status(400)
+    //       .json(
+    //         new ApiResponse(
+    //           400,
+    //           {},
+    //           `Office with id ${officeId} does not exist`
+    //         )
+    //       );
+    //   }
+    //   // validOfficeIds.push(office._id);
+    //   officeAssigned.push({ officeId: office._id, name: office.officeName });
+    // }
 
     // Create the asset
     const asset = new Asset({
       assetType,
-      typeAsset,
+      equipmentType,
       name,
       businessId: business._id,
-      serialNumber,
-      categoryType: categoryType,
+      modelNumber,
+      consumptionType,
       consumptionRate,
       purchaseDate,
       purchaseAmount,
       expiryDate,
       image,
       invoice,
-      officeAssigned: officeAssigned,
     });
 
     // Save the Asset document to the database
@@ -277,7 +269,7 @@ const createAsset = asyncHandler(async (req, res) => {
     await asset.save({ session });
 
     // Add the asset details to the business document
-    business.assets.push({ name, serialNumber, assetId: asset._id });
+    business.assets.push({ name, modelNumber, assetId: asset._id });
     await business.save({ session });
 
     await session.commitTransaction();

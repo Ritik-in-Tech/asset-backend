@@ -1,6 +1,5 @@
 import { Schema, model } from "mongoose";
 import {
-  contactNumberSchema,
   commonStringConstraints,
   commonDateConstraints,
 } from "../utils/helpers/schema.helper.js";
@@ -53,17 +52,17 @@ const createdByAsset = new Schema(
   }
 );
 
-const officeAssignedSchema = new Schema(
-  {
-    name: commonStringConstraints,
-    officeId: {
-      type: Schema.Types.ObjectId,
-    },
-  },
-  {
-    _id: false,
-  }
-);
+// const officeAssignedSchema = new Schema(
+//   {
+//     name: commonStringConstraints,
+//     officeId: {
+//       type: Schema.Types.ObjectId,
+//     },
+//   },
+//   {
+//     _id: false,
+//   }
+// );
 
 const assetSchema = new Schema({
   assetType: {
@@ -77,11 +76,11 @@ const assetSchema = new Schema({
   name: commonStringConstraints,
   capacity: commonStringConstraints,
   operator: [operatorSchema],
-  serialNumber: {
+  modelNumber: {
     type: String,
     required: true,
   },
-  categoryType: {
+  consumptionType: {
     type: String,
     required: true,
   },
@@ -100,8 +99,8 @@ const assetSchema = new Schema({
   maintainenace: [maintainenaceSchema],
   usageHistory: [usageHistorySchema],
   createdBy: [createdByAsset],
-  officeAssigned: [officeAssignedSchema],
-  typeAsset: commonStringConstraints,
+  // officeAssigned: [officeAssignedSchema],
+  equipmentType: commonStringConstraints,
 });
 
 const Asset = model("Assets", assetSchema);
