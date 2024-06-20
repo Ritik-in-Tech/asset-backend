@@ -11,6 +11,7 @@ const addUsageHistory = asyncHandler(async (req, res) => {
   try {
     const { state } = req.body;
     const assetId = req.params.assetId;
+    const businessId = req.params.businessId;
 
     if (!assetId) {
       return res
@@ -18,10 +19,23 @@ const addUsageHistory = asyncHandler(async (req, res) => {
         .json(new ApiResponse(400, {}, "Asset ID is required"));
     }
 
+    if (!businessId) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Business ID is required"));
+    }
+
     const asset = await Asset.findById(assetId);
 
     if (!asset) {
       return res.status(404).json(new ApiResponse(404, {}, "Asset not found"));
+    }
+
+    const business = await Business.findById(businessId);
+    if (!business) {
+      return res
+        .status(404)
+        .json(new ApiResponse(404, {}, "Business not found"));
     }
 
     // Fetch the latest usage history for the asset
@@ -63,6 +77,7 @@ const addUsageHistory = asyncHandler(async (req, res) => {
     // If no usage history exists, create a new one
     const newUsageHistory = new UsageHistory({
       stateDetails: [{ state: state, time: new Date() }],
+      businessId: businessId,
       assetID: assetId,
     });
 
