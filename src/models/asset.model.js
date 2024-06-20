@@ -99,7 +99,6 @@ const assetSchema = new Schema({
   maintainenace: [maintainenaceSchema],
   usageHistory: [usageHistorySchema],
   createdBy: [createdByAsset],
-  // officeAssigned: [officeAssignedSchema],
   equipmentType: commonStringConstraints,
 });
 
