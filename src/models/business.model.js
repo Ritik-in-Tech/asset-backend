@@ -5,7 +5,7 @@ import { commonStringConstraints } from "../utils/helpers/schema.helper.js";
 const assetSchema = new Schema(
   {
     name: commonStringConstraints,
-    serialNumber: commonStringConstraints,
+    modelNumber: commonStringConstraints,
     assetId: {
       type: Schema.Types.ObjectId,
     },
