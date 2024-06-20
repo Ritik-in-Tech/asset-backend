@@ -37,6 +37,7 @@ const getUser = asyncHandler(async (req, res, next) => {
       const businessCode = businessInfo?.businessCode || "";
       const businessCategories = businessInfo?.businessCategory;
       const assetCategories = businessInfo?.assetCategory;
+      const offices = businessInfo?.cityOffices;
 
       const additionalData = {
         pendingRequest: pendingRequests || 0,
@@ -47,6 +48,7 @@ const getUser = asyncHandler(async (req, res, next) => {
         businessCode: businessCode,
         businessCategories: businessCategories,
         assetCategories: assetCategories,
+        offices: offices,
       };
 
       const businessData = {
