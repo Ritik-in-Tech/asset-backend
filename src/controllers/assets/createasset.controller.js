@@ -164,7 +164,7 @@ const createAsset = asyncHandler(async (req, res) => {
       await session.abortTransaction();
       session.endSession();
       return res
-        .status(409) // Conflict, asset with same serial number exists
+        .status(409) // Conflict, asset with same model number exists
         .json(
           new ApiResponse(
             409,
