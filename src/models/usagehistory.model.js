@@ -25,6 +25,9 @@ const usageHistorySchema = new Schema({
   assetID: {
     type: Schema.Types.ObjectId,
   },
+  businessId: {
+    type: Schema.Types.ObjectId,
+  },
 });
 
 const UsageHistory = model("UsageHistory", usageHistorySchema);
