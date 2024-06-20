@@ -82,6 +82,7 @@ import usageHistoryRoutes from "./routes/usagehistory.routes.js";
 import uploadDocumentRoutes from "./routes/upload.document.routes.js";
 import uploadfileAWSRoutes from "./routes/upload.file.routes.js";
 import officeRoutes from "./routes/office.routes.js";
+import settingRoutes from "./routes/settings.routes.js";
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/user", userRoutes);
@@ -92,6 +93,7 @@ app.use("/api/v1/usage", usageHistoryRoutes);
 app.use("/api/v1", uploadDocumentRoutes);
 app.use("/api/v1", uploadfileAWSRoutes);
 app.use("/api/v1/office", officeRoutes);
+app.use("/api/v1/settings", settingRoutes);
 
 // Catch-all route for undefined routes
 app.get("*", (req, res) => {
