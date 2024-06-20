@@ -10,7 +10,7 @@ const router = Router();
 
 // router.use(verifyJWT);
 // router to add the usage History
-router.route("/add-usage-history/:assetId").post(addUsageHistory);
+router.route("/add-usage-history/:assetId/:businessId").post(addUsageHistory);
 
 router.route("/get-usage-history/:assetId").get(getUsageHistory);
 
