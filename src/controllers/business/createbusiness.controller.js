@@ -14,10 +14,8 @@ const createBusiness = asyncHandler(async (req, res) => {
       businessName, // corrected typo: 'buisnessName' to 'businessName'
       logo,
       industryType,
-      cityOffices, // updated to accept cityOffices structure
+      city, // updated to accept cityOffices structure
       country,
-      businessCategory,
-      assetCategory,
     } = req.body;
 
     // Validation: Check if admin name and contact number are provided
@@ -43,32 +41,8 @@ const createBusiness = asyncHandler(async (req, res) => {
         .json(new ApiResponse(400, {}, "Fill name of business!!"));
     }
 
-    if (!Array.isArray(cityOffices)) {
-      return res
-        .status(400)
-        .json(new ApiResponse(400, {}, "cityOffices must be an array"));
-    }
     const existingCodes = new Set(await Business.distinct("businessCode"));
     const businessCode = generateUniqueCode(existingCodes);
-
-    // Convert businessCategory and assetCategory into schema-compatible format
-    const businessCategories = businessCategory.map((category) => ({
-      name: category,
-    }));
-    const assetCategories = assetCategory.map((asset) => ({ name: asset }));
-
-    // Format cityOffices to match the new schema
-    const formattedCityOffices = cityOffices.map((cityOffice) => {
-      if (!Array.isArray(cityOffice) || cityOffice.length < 2) {
-        throw new Error(
-          "Each cityOffices entry must be an array with at least one city and one office"
-        );
-      }
-      return {
-        city: cityOffice[0],
-        offices: cityOffice.slice(1),
-      };
-    });
 
     // Create the new business entry
     const business = await Business.create(
@@ -77,11 +51,9 @@ const createBusiness = asyncHandler(async (req, res) => {
           businessCode: businessCode,
           name: businessName,
           industryType: industryType,
-          cityOffices: formattedCityOffices, // use the new cityOffices format
           logo: logo || "",
           country: country,
-          businessCategory: businessCategories,
-          assetCategory: assetCategories,
+          city: city,
         },
       ],
       { session: session }
