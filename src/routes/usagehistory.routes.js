@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   addUsageHistory,
+  getBusinessConsumptionData,
   getConsumptionDataSpecificAsset,
   getUsageHistory,
 } from "../controllers/usagehistory/addusagehistory.controller.js";
@@ -17,5 +18,9 @@ router.route("/get-usage-history/:assetId").get(getUsageHistory);
 router
   .route("/get-consumption-specific-asset/:assetId")
   .get(getConsumptionDataSpecificAsset);
+
+router
+  .route("/get-business-consumption-data/:businessId")
+  .get(getBusinessConsumptionData);
 
 export default router;

@@ -6,6 +6,7 @@ import { BusinessUsers } from "../../models/businessusers.model.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import mongoose from "mongoose";
 import { Office } from "../../models/office.model.js";
+import { Settings } from "../../models/settings.model.js";
 
 const createAsset = asyncHandler(async (req, res) => {
   const session = await mongoose.startSession();
@@ -237,6 +238,17 @@ const createAsset = asyncHandler(async (req, res) => {
       adminId: userId,
     });
     await asset.save({ session });
+
+    let settings = await Settings.findOne({ assetId: asset._id });
+    if (!settings) {
+      settings = new Settings({
+        assetId: asset._id,
+      });
+      await settings.save({ session });
+
+      settings.consumption.push({ category: consumptionCategories });
+      await settings.save({ session });
+    }
 
     // Add the asset details to the business document
     business.assets.push({ name, modelNumber, assetId: asset._id });

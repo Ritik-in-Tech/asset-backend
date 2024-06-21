@@ -3,7 +3,7 @@ import { commonStringConstraints } from "../utils/helpers/schema.helper.js";
 
 const consumptionData = new Schema(
   {
-    consumptionType: commonStringConstraints,
+    category: commonStringConstraints,
     consumptionRate: {
       type: Number,
       default: 0,
@@ -14,26 +14,13 @@ const consumptionData = new Schema(
   }
 );
 
-const equipmentData = new Schema(
-  {
-    equipmentType: commonStringConstraints,
-    equipmentRate: {
-      type: Number,
-      default: 0,
-    },
-  },
-  {
-    _id: false,
-  }
-);
 const settingsSchema = new Schema({
-  businessId: {
+  assetId: {
     type: Schema.Types.ObjectId,
     required: true,
-    ref: "Business",
+    ref: "Assets",
   },
   consumption: [consumptionData],
-  equipment: [equipmentData],
 });
 
 const Settings = model("Settings", settingsSchema);
