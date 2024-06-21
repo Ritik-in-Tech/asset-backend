@@ -6,6 +6,7 @@ import { BusinessUsers } from "../../models/businessusers.model.js";
 import { UsageHistory } from "../../models/usagehistory.model.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { getCurrentIndianTime } from "../../utils/helpers/time.helper.js";
+import { Settings } from "../../models/settings.model.js";
 
 const addUsageHistory = asyncHandler(async (req, res) => {
   try {
@@ -205,31 +206,73 @@ const getConsumptionDataSpecificAsset = asyncHandler(async (req, res) => {
         );
     }
 
-    const consumptionRate = asset.consumptionRate; // in kW/h
+    const settings = await Settings.findOne({ assetId: assetId });
+    if (!settings) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Please add settings data"));
+    }
 
-    // Group stateDetails by date and calculate consumption
+    const targetCategory = asset.consumptionCategories;
+
+    const categoryConsumption = settings.consumption.find(
+      (item) => item.category.toLowerCase() === targetCategory.toLowerCase()
+    );
+
+    if (!categoryConsumption) {
+      return res
+        .status(404)
+        .json(
+          new ApiResponse(
+            404,
+            {},
+            `Consumption rate for category '${targetCategory}' not found`
+          )
+        );
+    }
+
+    const consumptionRateKWH = asset.consumptionRate; // this is in KiloWatt per hour
+    const consumptionRateRupees = categoryConsumption.consumptionRate; // this is in rupees per hour
+
+    console.log(
+      `Consumption rate for ${targetCategory}: ${consumptionRateKWH} KWH, ${consumptionRateRupees} Rupees/hour`
+    );
+
     const dailyConsumption = {};
     let onTime = null;
 
-    usageHistoryDetails.stateDetails.forEach((detail) => {
+    usageHistoryDetails.stateDetails.forEach((detail, index) => {
       const date = moment(detail.time).tz("Asia/Kolkata").format("YYYY-MM-DD");
       const time = moment(detail.time).tz("Asia/Kolkata");
 
       if (!dailyConsumption[date]) {
-        dailyConsumption[date] = 0;
+        dailyConsumption[date] = { kWh: 0, rupees: 0 };
       }
 
       if (detail.state === "On") {
         onTime = time;
       } else if (detail.state === "Off" && onTime) {
         const durationHours = moment.duration(time.diff(onTime)).asHours();
-        dailyConsumption[date] += durationHours * consumptionRate;
+        dailyConsumption[date].kWh += durationHours * consumptionRateKWH;
+        dailyConsumption[date].rupees += durationHours * consumptionRateRupees;
         onTime = null;
+      }
+
+      if (index === usageHistoryDetails.stateDetails.length - 1 && onTime) {
+        // Assuming the asset runs until the end of the day
+        const endOfDay = moment(onTime).endOf("day");
+        const durationHours = moment.duration(endOfDay.diff(onTime)).asHours();
+        dailyConsumption[date].kWh += durationHours * consumptionRateKWH;
+        dailyConsumption[date].rupees += durationHours * consumptionRateRupees;
+        onTime = null; // Reset after final calculation
       }
     });
 
+    // Round the consumption values
     for (const date in dailyConsumption) {
-      dailyConsumption[date] = Math.round(dailyConsumption[date]);
+      dailyConsumption[date].kWh =
+        Math.round(dailyConsumption[date].kWh * 100) / 100; // Round to 2 decimal places
+      dailyConsumption[date].rupees = Math.round(dailyConsumption[date].rupees);
     }
 
     return res
@@ -255,4 +298,117 @@ const getConsumptionDataSpecificAsset = asyncHandler(async (req, res) => {
   }
 });
 
-export { addUsageHistory, getUsageHistory, getConsumptionDataSpecificAsset };
+const getBusinessConsumptionData = asyncHandler(async (req, res) => {
+  try {
+    const businessId = req.params.businessId;
+    if (!businessId) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Business ID is required"));
+    }
+
+    const usageHistories = await UsageHistory.find({ businessId: businessId });
+    if (usageHistories.length === 0) {
+      return res
+        .status(400)
+        .json(
+          new ApiResponse(400, {}, "No usage histories found for this business")
+        );
+    }
+
+    const businessConsumption = {};
+
+    for (const usageHistory of usageHistories) {
+      const assetId = usageHistory.assetID;
+
+      // Fetch asset details
+      const asset = await Asset.findById(assetId);
+      if (!asset) continue; // Skip if asset not found
+
+      // Fetch settings for the asset
+      const settings = await Settings.findOne({ assetId: assetId });
+      if (!settings) continue; // Skip if settings not found
+
+      const targetCategory = asset.consumptionCategories;
+      const categoryConsumption = settings.consumption.find(
+        (item) => item.category.toLowerCase() === targetCategory.toLowerCase()
+      );
+      if (!categoryConsumption) continue; // Skip if category not found
+
+      const consumptionRateKWH = asset.consumptionRate; // this is in KiloWatt per hour
+      const consumptionRateRupees = categoryConsumption.consumptionRate; // this is in rupees per hour
+
+      let onTime = null;
+
+      usageHistory.stateDetails.forEach((detail, index) => {
+        const date = moment(detail.time)
+          .tz("Asia/Kolkata")
+          .format("YYYY-MM-DD");
+        const time = moment(detail.time).tz("Asia/Kolkata");
+
+        if (!businessConsumption[date]) {
+          businessConsumption[date] = { kWh: 0, rupees: 0 };
+        }
+
+        if (detail.state === "On") {
+          onTime = time;
+        } else if (detail.state === "Off" && onTime) {
+          const durationHours = moment.duration(time.diff(onTime)).asHours();
+          businessConsumption[date].kWh += durationHours * consumptionRateKWH;
+          businessConsumption[date].rupees +=
+            durationHours * consumptionRateRupees;
+          onTime = null;
+        }
+
+        if (index === usageHistory.stateDetails.length - 1 && onTime) {
+          // Assuming the asset runs until the end of the day
+          const endOfDay = moment(onTime).endOf("day");
+          const durationHours = moment
+            .duration(endOfDay.diff(onTime))
+            .asHours();
+          businessConsumption[date].kWh += durationHours * consumptionRateKWH;
+          businessConsumption[date].rupees +=
+            durationHours * consumptionRateRupees;
+          onTime = null; // Reset after final calculation
+        }
+      });
+    }
+
+    // Round the consumption values
+    for (const date in businessConsumption) {
+      businessConsumption[date].kWh =
+        Math.round(businessConsumption[date].kWh * 100) / 100; // Round to 2 decimal places
+      businessConsumption[date].rupees = Math.round(
+        businessConsumption[date].rupees
+      );
+    }
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          businessConsumption,
+          "Business consumption data retrieved successfully"
+        )
+      );
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json(
+        new ApiResponse(
+          500,
+          {},
+          "An error occurred while calculating business consumption data"
+        )
+      );
+  }
+});
+
+export {
+  addUsageHistory,
+  getUsageHistory,
+  getConsumptionDataSpecificAsset,
+  getBusinessConsumptionData,
+};

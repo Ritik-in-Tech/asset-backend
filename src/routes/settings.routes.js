@@ -6,5 +6,5 @@ const router = Router();
 
 router.use(verifyJWT);
 
-router.route("/create-settings/:businessId").post(addSettingsData);
+router.route("/create-settings/:assetId").post(addSettingsData);
 export default router;

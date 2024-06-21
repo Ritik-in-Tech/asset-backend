@@ -1,3 +1,4 @@
+import { Asset } from "../models/asset.model.js";
 import { Business } from "../models/business.model.js";
 import { Settings } from "../models/settings.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -5,106 +6,47 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 const addSettingsData = asyncHandler(async (req, res) => {
   try {
-    const businessId = req.params.businessId;
-    if (!businessId) {
+    const assetId = req.params.assetId;
+    if (!assetId) {
       return res
         .status(400)
-        .json(new ApiResponse(400, {}, "Please provide businessId in params"));
+        .json(new ApiResponse(400, {}, "Please provide assetId in params"));
     }
 
-    const business = await Business.findById(businessId);
-    if (!business) {
-      return res
-        .status(400)
-        .json(new ApiResponse(400, {}, "Business not found"));
+    const asset = await Asset.findById(assetId);
+    if (!asset) {
+      return res.status(400).json(new ApiResponse(400, {}, "Asset not found"));
     }
 
-    const { consumptionType, consumptionRate, equipmentType, equipmentRate } =
-      req.body;
-
-    if (consumptionType) {
-      const checkExistConsumptionInBusiness = business.businessCategory.some(
-        (category) => category.name === consumptionType
-      );
-
-      if (!checkExistConsumptionInBusiness) {
-        return res
-          .status(400)
-          .json(
-            new ApiResponse(
-              400,
-              {},
-              "Consumption type not found in the business"
-            )
-          );
-      }
-    }
-
-    if (equipmentType) {
-      const checkExistEquipmentInBusiness = business.assetCategory.some(
-        (category) => category.name === equipmentType
-      );
-
-      if (!checkExistEquipmentInBusiness) {
-        return res
-          .status(400)
-          .json(
-            new ApiResponse(400, {}, "Equipment type not found in the business")
-          );
-      }
-    }
+    const { category, consumptionRate } = req.body;
 
     // Check if settings for the businessId already exist
-    let settings = await Settings.findOne({ businessId: businessId });
+    let settings = await Settings.findOne({ assetId: assetId });
 
     if (!settings) {
       // If settings don't exist, create a new one
       settings = new Settings({
-        businessId: businessId,
+        assetId: assetId,
         consumption: [],
-        equipment: [],
       });
     }
 
-    // Update or add consumption entry
-    if (consumptionType && consumptionRate) {
+    if (category && consumptionRate) {
       const existingConsumption = settings.consumption.find(
-        (item) => item.consumptionType === consumptionType
+        (item) => item.category === category
       );
 
       if (existingConsumption) {
-        // Update the rate of the existing consumption type
         existingConsumption.consumptionRate = consumptionRate;
       } else {
-        // Add new consumption entry
         settings.consumption.push({
-          consumptionType: consumptionType,
+          category: category,
           consumptionRate: consumptionRate,
         });
       }
     }
 
-    // Update or add equipment entry
-    if (equipmentType && equipmentRate) {
-      const existingEquipment = settings.equipment.find(
-        (item) => item.equipmentType === equipmentType
-      );
-
-      if (existingEquipment) {
-        // Update the rate of the existing equipment type
-        existingEquipment.equipmentRate = equipmentRate;
-      } else {
-        // Add new equipment entry
-        settings.equipment.push({
-          equipmentType: equipmentType,
-          equipmentRate: equipmentRate,
-        });
-      }
-    }
-
-    console.log("Settings before saving:", settings);
     await settings.save();
-    console.log("Settings after saving:", settings);
 
     return res
       .status(201)
