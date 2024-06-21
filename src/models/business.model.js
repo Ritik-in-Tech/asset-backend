@@ -16,34 +16,34 @@ const assetSchema = new Schema(
 );
 
 // Schema for business categories
-const businessCategoriesSchema = new Schema(
-  {
-    name: commonStringConstraints,
-  },
-  {
-    _id: false,
-  }
-);
+// const businessCategoriesSchema = new Schema(
+//   {
+//     name: commonStringConstraints,
+//   },
+//   {
+//     _id: false,
+//   }
+// );
 
 // Schema for asset categories
-const assetCategoriesSchema = new Schema(
-  {
-    name: commonStringConstraints,
-  },
-  {
-    _id: false,
-  }
-);
+// const assetCategoriesSchema = new Schema(
+//   {
+//     name: commonStringConstraints,
+//   },
+//   {
+//     _id: false,
+//   }
+// );
 
-const cityOfficesSchema = new Schema(
-  {
-    city: commonStringConstraints,
-    offices: [commonStringConstraints],
-  },
-  {
-    _id: false,
-  }
-);
+// const cityOfficesSchema = new Schema(
+//   {
+//     city: commonStringConstraints,
+//     offices: [commonStringConstraints],
+//   },
+//   {
+//     _id: false,
+//   }
+// );
 
 // Main business schema
 const businessSchema = new Schema({
@@ -64,17 +64,9 @@ const businessSchema = new Schema({
     type: String,
   },
   industryType: commonStringConstraints,
+  city: commonStringConstraints,
   country: commonStringConstraints,
-  businessCategory: [businessCategoriesSchema],
-  targets: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "Target",
-    },
-  ],
   assets: [assetSchema],
-  cityOffices: [cityOfficesSchema],
-  assetCategory: [assetCategoriesSchema],
 });
 
 const Business = model("Business", businessSchema);

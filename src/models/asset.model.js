@@ -80,7 +80,7 @@ const assetSchema = new Schema({
     type: String,
     required: true,
   },
-  consumptionType: {
+  consumptionCategories: {
     type: String,
     required: true,
   },
@@ -99,7 +99,7 @@ const assetSchema = new Schema({
   maintainenace: [maintainenaceSchema],
   usageHistory: [usageHistorySchema],
   createdBy: [createdByAsset],
-  equipmentType: commonStringConstraints,
+  assetCategories: commonStringConstraints,
 });
 
 const Asset = model("Assets", assetSchema);

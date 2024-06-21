@@ -84,9 +84,9 @@ const createAsset = asyncHandler(async (req, res) => {
 
     const {
       assetType,
-      equipmentType,
+      assetCategories,
       name,
-      consumptionType,
+      consumptionCategories,
       operatorId,
       modelNumber,
       purchaseDate,
@@ -98,7 +98,14 @@ const createAsset = asyncHandler(async (req, res) => {
     } = req.body;
 
     const validAssetTypes = ["Fixed", "Moving"];
-    if (!assetType || !name || !modelNumber || !operatorId || !equipmentType) {
+    if (
+      !assetType ||
+      !name ||
+      !modelNumber ||
+      !operatorId ||
+      !assetCategories ||
+      !consumptionCategories
+    ) {
       await session.abortTransaction();
       session.endSession();
       return res
@@ -118,43 +125,6 @@ const createAsset = asyncHandler(async (req, res) => {
       return res
         .status(400) // Bad Request, invalid asset type
         .json(new ApiResponse(400, {}, "Invalid asset type provided"));
-    }
-
-    const categoryExists = business.businessCategory.some(
-      (category) =>
-        category.name.toLowerCase() === consumptionType.toLowerCase()
-    );
-
-    if (!categoryExists) {
-      await session.abortTransaction();
-      session.endSession();
-      return res
-        .status(400)
-        .json(
-          new ApiResponse(
-            400,
-            {},
-            "The provided category type does not exist for this business"
-          )
-        );
-    }
-
-    const eqipmentTypeExists = business.assetCategory.some(
-      (asset) => asset.name.toLowerCase() === equipmentType.toLowerCase()
-    );
-
-    if (!eqipmentTypeExists) {
-      await session.abortTransaction();
-      session.endSession();
-      return res
-        .status(400)
-        .json(
-          new ApiResponse(
-            400,
-            {},
-            "The provided asset type does not exist for this business"
-          )
-        );
     }
 
     const existingAssetByModel = business.assets.find(
@@ -240,11 +210,11 @@ const createAsset = asyncHandler(async (req, res) => {
     // Create the asset
     const asset = new Asset({
       assetType,
-      equipmentType,
+      assetCategories,
       name,
       businessId: business._id,
       modelNumber,
-      consumptionType,
+      consumptionCategories,
       consumptionRate,
       purchaseDate,
       purchaseAmount,
