@@ -5,6 +5,7 @@ import { generateUniqueCode } from "../../utils/helpers/array.helper.js";
 import { BusinessUsers } from "../../models/businessusers.model.js";
 import { User } from "../../models/user.model.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
+import { Office } from "../../models/office.model.js";
 
 const createBusiness = asyncHandler(async (req, res) => {
   const session = await startSession();
@@ -71,6 +72,24 @@ const createBusiness = asyncHandler(async (req, res) => {
       myPinnedIssues: [],
       groupsJoined: [],
     };
+
+    const office = await Office.findOne({
+      businessId: business[0]._id,
+      officeName: city,
+    });
+
+    if (office) {
+      return res
+        .status(400)
+        .json(
+          new ApiResponse(400, {}, "Business have already this office name")
+        );
+    }
+
+    await Office.create({
+      businessId: business[0]._id,
+      officeName: city,
+    });
 
     // Create business user entry
     await BusinessUsers.create([adminInfo], { session: session });

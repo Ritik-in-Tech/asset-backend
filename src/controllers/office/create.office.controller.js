@@ -12,13 +12,40 @@ const createOffice = asyncHandler(async (req, res) => {
 
   try {
     const businessId = req.params.businessId;
-    const { officeName, officeCity, officeState, officeDirection } = req.body;
+    const { officesArray } = req.body;
 
     // Validate request body
-    if (!officeName || !officeCity || !officeState || !officeDirection) {
+    if (
+      !officesArray ||
+      !Array.isArray(officesArray) ||
+      officesArray.length === 0
+    ) {
       return res
         .status(400)
-        .json(new ApiResponse(400, {}, "Please fill all the requested fields"));
+        .json(
+          new ApiResponse(400, {}, "officesArray must be a non-empty array")
+        );
+    }
+
+    const isValidOfficesArray = officesArray.every(
+      (office) =>
+        Array.isArray(office) &&
+        office.length === 2 &&
+        typeof office[0] === "string" &&
+        office[0].trim() !== "" &&
+        typeof office[1] === "string"
+    );
+
+    if (!isValidOfficesArray) {
+      return res
+        .status(400)
+        .json(
+          new ApiResponse(
+            400,
+            {},
+            "officesArray must contain pairs of [office, parent office], where office is a non-empty string and parent office is a string"
+          )
+        );
     }
 
     // Validate businessId
@@ -54,6 +81,7 @@ const createOffice = asyncHandler(async (req, res) => {
       businessId: businessId,
       userId: userId,
     });
+    console.log(businessusers.role);
 
     if (!businessusers) {
       return res
@@ -67,41 +95,102 @@ const createOffice = asyncHandler(async (req, res) => {
         );
     }
 
-    if (businessusers.role !== "Admin") {
+    if (businessusers.role !== "Admin" && businessusers.role !== "MiniAdmin") {
       return res
         .status(400)
         .json(
-          new ApiResponse(400, {}, "Only admin have access to create offices")
+          new ApiResponse(
+            400,
+            {},
+            "Only admin and miniadmin have access to create offices"
+          )
         );
     }
 
-    // Create new office
-    const officeDetails = new Office({
-      officeName,
-      businessId,
-      officeCity,
-      officeState,
-      officeDirection,
-    });
+    const createdOffices = [];
 
-    // Save the office
-    await officeDetails.save({ session });
+    for (const [officeName, parentOfficeName] of officesArray) {
+      // Check if the office already exists for this business
+      const existingOffice = await Office.findOne({
+        businessId: businessId,
+        name: officeName,
+      }).session(session);
 
-    // Update the business document
-    business.offices.push({ name: officeName, officeId: officeDetails._id });
-    await business.save({ session });
+      if (existingOffice) {
+        await session.abortTransaction();
+        session.endSession();
+        return res
+          .status(400)
+          .json(
+            new ApiResponse(
+              400,
+              {},
+              `Office '${officeName}' already exists for this business`
+            )
+          );
+      }
 
-    user.offices.push({ name: officeName, officeId: officeDetails._id });
-    await user.save({ session });
+      let parentOfficeId = null;
+      let parentOffice;
+      if (parentOfficeName) {
+        // Find the parent office
+        parentOffice = await Office.findOne({
+          businessId: businessId,
+          officeName: parentOfficeName,
+        }).session(session);
 
-    // Commit the transaction
+        if (!parentOffice) {
+          await session.abortTransaction();
+          session.endSession();
+          return res
+            .status(400)
+            .json(
+              new ApiResponse(
+                400,
+                {},
+                `Parent office '${parentOfficeName}' not found`
+              )
+            );
+        }
+
+        parentOfficeId = parentOffice._id;
+      }
+
+      // Create the new office
+      const newOffice = new Office({
+        officeName: officeName,
+        businessId: businessId,
+        parentOfficeId: parentOfficeId,
+      });
+
+      await newOffice.save({ session });
+
+      if (parentOffice) {
+        parentOffice.subordinates.push(newOffice._id);
+        parentOffice.allSubordinates.push(newOffice._id);
+        await parentOffice.save({ session });
+
+        // Update all ancestors' allSubordinates
+        let currentParent = parentOffice;
+        while (currentParent.parentOfficeId) {
+          currentParent = await Office.findById(
+            currentParent.parentOfficeId
+          ).session(session);
+          currentParent.allSubordinates.push(newOffice._id);
+          await currentParent.save({ session });
+        }
+      }
+      createdOffices.push(newOffice);
+    }
+
+    // If we've reached this point, all offices were created successfully
     await session.commitTransaction();
     session.endSession();
 
     return res
       .status(201)
       .json(
-        new ApiResponse(201, { officeDetails }, "Office created successfully!")
+        new ApiResponse(201, { createdOffices }, "Offices created successfully")
       );
   } catch (error) {
     // Abort the transaction in case of error
