@@ -155,7 +155,7 @@ const addMaintenanceDetails = asyncHandler(async (req, res) => {
     console.error("Error:", error);
     return res
       .status(500)
-      .json(new ApiResponse(500, {}, "Internal Server Error"));
+      .json(new ApiResponse(500, { error }, "Internal Server Error"));
   }
 });
 

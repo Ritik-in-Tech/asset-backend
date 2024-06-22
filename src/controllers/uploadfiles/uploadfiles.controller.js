@@ -68,6 +68,9 @@ const uploadDocument = catchAsync(async (req, res, next) => {
   } catch (error) {
     console.error("Error while uploading document:", error);
     next(new ApiError("Failed to upload document", 401));
+    return res
+      .status(500)
+      .json(new ApiResponse(500, { error }, "Internal Server error"));
   }
 });
 

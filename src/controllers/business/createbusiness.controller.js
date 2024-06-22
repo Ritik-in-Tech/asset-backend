@@ -139,7 +139,7 @@ const createBusiness = asyncHandler(async (req, res) => {
     session.endSession();
     return res
       .status(500)
-      .json(new ApiResponse(500, {}, "Internal Server Error"));
+      .json(new ApiResponse(500, { error }, "Internal Server Error"));
   }
 });
 

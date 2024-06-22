@@ -99,13 +99,7 @@ const updateBusinessDetails = asyncHandler(async (req, res) => {
     console.error("Error:", error); // Improved error logging
     return res
       .status(500)
-      .json(
-        new ApiResponse(
-          500,
-          { message: error.message },
-          "Internal Server Error"
-        )
-      );
+      .json(new ApiResponse(500, { error }, "Internal Server Error"));
   }
 });
 
