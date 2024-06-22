@@ -81,7 +81,7 @@ const createOffice = asyncHandler(async (req, res) => {
       businessId: businessId,
       userId: userId,
     });
-    console.log(businessusers.role);
+    // console.log(businessusers.role);
 
     if (!businessusers) {
       return res
@@ -155,6 +155,7 @@ const createOffice = asyncHandler(async (req, res) => {
 
         parentOfficeId = parentOffice._id;
       }
+      console.log(parentOfficeId);
 
       // Create the new office
       const newOffice = new Office({
@@ -162,6 +163,7 @@ const createOffice = asyncHandler(async (req, res) => {
         businessId: businessId,
         parentOfficeId: parentOfficeId,
       });
+      console.log(newOffice);
 
       await newOffice.save({ session });
 

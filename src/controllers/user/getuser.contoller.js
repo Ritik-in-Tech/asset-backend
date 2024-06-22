@@ -36,6 +36,7 @@ const getUser = asyncHandler(async (req, res, next) => {
       const businessInfo = await Business.findById(businessId);
       const businessCode = businessInfo?.businessCode || "";
       const businessCategories = businessInfo?.businessCategory;
+      const city = businessInfo?.city;
       const assetCategories = businessInfo?.assetCategory;
       const offices = businessInfo?.cityOffices;
 
@@ -49,6 +50,7 @@ const getUser = asyncHandler(async (req, res, next) => {
         businessCategories: businessCategories,
         assetCategories: assetCategories,
         offices: offices,
+        city: city,
       };
 
       const businessData = {
