@@ -75,20 +75,24 @@ const createBusiness = asyncHandler(async (req, res) => {
 
     const office = await Office.findOne({
       businessId: business[0]._id,
-      officeName: city,
+      officeLocation: city,
     });
 
     if (office) {
       return res
         .status(400)
         .json(
-          new ApiResponse(400, {}, "Business have already this office name")
+          new ApiResponse(
+            400,
+            {},
+            "Business have already this office locations"
+          )
         );
     }
 
     await Office.create({
       businessId: business[0]._id,
-      officeName: city,
+      officeLocation: city,
     });
 
     // Create business user entry

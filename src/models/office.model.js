@@ -26,7 +26,7 @@ const officeSchema = new Schema({
   allSubordinates: {
     type: [Schema.Types.ObjectId],
   },
-  officeName: commonStringConstraints,
+  officeLocation: commonStringConstraints,
   assets: [assetSchema],
 });
 
