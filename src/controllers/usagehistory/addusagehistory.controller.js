@@ -61,7 +61,10 @@ const addUsageHistory = asyncHandler(async (req, res) => {
       }
 
       // Add the new state detail to the existing usage history
-      latestUsageHistory.stateDetails.push({ state: state, time: new Date() });
+      latestUsageHistory.stateDetails.push({
+        state: state,
+        time: getCurrentIndianTime(),
+      });
       await latestUsageHistory.save();
 
       return res
@@ -77,7 +80,7 @@ const addUsageHistory = asyncHandler(async (req, res) => {
 
     // If no usage history exists, create a new one
     const newUsageHistory = new UsageHistory({
-      stateDetails: [{ state: state, time: new Date() }],
+      stateDetails: [{ state: state, time: getCurrentIndianTime() }],
       businessId: businessId,
       assetID: assetId,
     });
@@ -244,6 +247,9 @@ const getConsumptionDataSpecificAsset = asyncHandler(async (req, res) => {
     usageHistoryDetails.stateDetails.forEach((detail, index) => {
       const date = moment(detail.time).tz("Asia/Kolkata").format("YYYY-MM-DD");
       const time = moment(detail.time).tz("Asia/Kolkata");
+
+      // console.log(date);
+      // console.log(time);
 
       if (!dailyConsumption[date]) {
         dailyConsumption[date] = { kWh: 0, rupees: 0 };

@@ -1,17 +1,8 @@
 export function getCurrentIndianTime() {
-  // Get current date and time in UTC
-  let currentDate = new Date();
-
-  // Get UTC time in milliseconds
-  let utcTime = currentDate.getTime();
-
-  // Indian Standard Time (IST) is UTC+5:30
-  let istOffset = 5.5 * 60 * 60 * 1000;
-
-  // Convert UTC time to IST time
-  let istTime = new Date(utcTime + istOffset);
-
-  return new Date();
+  // IST is UTC + 5:30
+  const now = new Date();
+  now.setMinutes(now.getMinutes() + now.getTimezoneOffset() + 330); // 330 minutes = 5.5 hours
+  return now;
 }
 
 export function getCurrentUTCTime() {
