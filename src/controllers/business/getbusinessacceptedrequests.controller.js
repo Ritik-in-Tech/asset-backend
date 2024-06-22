@@ -32,7 +32,7 @@ const getBusinessAcceptedRequests = asyncHandler(async (req, res) => {
     console.log(error);
     return res
       .status(500)
-      .json(new ApiResponse(500, {}, "Internal server error!"));
+      .json(new ApiResponse(500, { error }, "Internal server error!"));
   }
 });
 

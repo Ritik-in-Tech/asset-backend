@@ -106,7 +106,11 @@ const addUsageHistory = asyncHandler(async (req, res) => {
     return res
       .status(500)
       .json(
-        new ApiResponse(500, {}, "An error occurred while adding usage history")
+        new ApiResponse(
+          500,
+          { error },
+          "An error occurred while adding usage history"
+        )
       );
   }
 });
@@ -171,7 +175,7 @@ const getUsageHistory = asyncHandler(async (req, res) => {
       .json(
         new ApiResponse(
           500,
-          {},
+          { error },
           "An error occurred while retrieving usage history"
         )
       );
@@ -297,7 +301,7 @@ const getConsumptionDataSpecificAsset = asyncHandler(async (req, res) => {
       .json(
         new ApiResponse(
           500,
-          {},
+          { error },
           "An error occurred while calculating consumption data"
         )
       );
@@ -405,7 +409,7 @@ const getBusinessConsumptionData = asyncHandler(async (req, res) => {
       .json(
         new ApiResponse(
           500,
-          {},
+          { error },
           "An error occurred while calculating business consumption data"
         )
       );

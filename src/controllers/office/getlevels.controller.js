@@ -68,7 +68,7 @@ const getConsumptionLevel = asyncHandler(async (req, res) => {
       .json(
         new ApiResponse(
           500,
-          {},
+          { error },
           "An error occurred while processing your request"
         )
       );
@@ -152,7 +152,7 @@ const getLocation1stLevels = asyncHandler(async (req, res) => {
       .json(
         new ApiResponse(
           500,
-          {},
+          { error },
           "An error occurred while processing your request"
         )
       );

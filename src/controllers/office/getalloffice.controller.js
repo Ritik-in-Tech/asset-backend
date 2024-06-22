@@ -31,7 +31,7 @@ const getAllOfficeInBusiness = asyncHandler(async (req, res) => {
       .json(
         new ApiResponse(
           500,
-          {},
+          { error },
           "An error occurred while fetching office details"
         )
       );
@@ -93,7 +93,7 @@ const getOfficeLocationInBusiness = asyncHandler(async (req, res) => {
       .json(
         new ApiResponse(
           500,
-          {},
+          { error },
           "An error occurred while processing your request"
         )
       );
