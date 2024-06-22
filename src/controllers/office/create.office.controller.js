@@ -109,11 +109,11 @@ const createOffice = asyncHandler(async (req, res) => {
 
     const createdOffices = [];
 
-    for (const [officeName, parentOfficeName] of officesArray) {
+    for (const [officeLocation, parentOfficeLocation] of officesArray) {
       // Check if the office already exists for this business
       const existingOffice = await Office.findOne({
         businessId: businessId,
-        name: officeName,
+        officeLocation: officeLocation,
       }).session(session);
 
       if (existingOffice) {
@@ -125,18 +125,18 @@ const createOffice = asyncHandler(async (req, res) => {
             new ApiResponse(
               400,
               {},
-              `Office '${officeName}' already exists for this business`
+              `Office '${officeLocation}' already exists for this business`
             )
           );
       }
 
       let parentOfficeId = null;
       let parentOffice;
-      if (parentOfficeName) {
+      if (parentOfficeLocation) {
         // Find the parent office
         parentOffice = await Office.findOne({
           businessId: businessId,
-          officeName: parentOfficeName,
+          officeLocation: parentOfficeLocation,
         }).session(session);
 
         if (!parentOffice) {
@@ -148,18 +148,18 @@ const createOffice = asyncHandler(async (req, res) => {
               new ApiResponse(
                 400,
                 {},
-                `Parent office '${parentOfficeName}' not found`
+                `Parent office '${parentOfficeLocation}' not found`
               )
             );
         }
 
         parentOfficeId = parentOffice._id;
       }
-      console.log(parentOfficeId);
+      // console.log(parentOfficeId);
 
       // Create the new office
       const newOffice = new Office({
-        officeName: officeName,
+        officeLocation: officeLocation,
         businessId: businessId,
         parentOfficeId: parentOfficeId,
       });
