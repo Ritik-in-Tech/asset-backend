@@ -52,17 +52,17 @@ const createdByAsset = new Schema(
   }
 );
 
-// const officeAssignedSchema = new Schema(
-//   {
-//     name: commonStringConstraints,
-//     officeId: {
-//       type: Schema.Types.ObjectId,
-//     },
-//   },
-//   {
-//     _id: false,
-//   }
-// );
+const officeAssignedSchema = new Schema(
+  {
+    name: commonStringConstraints,
+    officeId: {
+      type: Schema.Types.ObjectId,
+    },
+  },
+  {
+    _id: false,
+  }
+);
 
 const assetSchema = new Schema({
   assetType: {
@@ -100,6 +100,7 @@ const assetSchema = new Schema({
   usageHistory: [usageHistorySchema],
   createdBy: [createdByAsset],
   assetCategories: commonStringConstraints,
+  office: [officeAssignedSchema],
 });
 
 const Asset = model("Assets", assetSchema);
