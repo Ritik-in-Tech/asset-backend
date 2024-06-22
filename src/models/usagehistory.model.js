@@ -19,7 +19,7 @@ const stateInformationSchema = new Schema(
 const usageHistorySchema = new Schema({
   createdDate: {
     type: Date,
-    default: Date.now,
+    default: getCurrentIndianTime,
   },
   stateDetails: [stateInformationSchema],
   assetID: {
