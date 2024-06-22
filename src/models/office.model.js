@@ -17,7 +17,7 @@ const officeSchema = new Schema({
   businessId: {
     type: Schema.Types.ObjectId,
   },
-  parnetOfficeId: {
+  parentOfficeId: {
     type: Schema.Types.ObjectId,
   },
   subordinates: {
