@@ -96,6 +96,7 @@ const createAsset = asyncHandler(async (req, res) => {
       expiryDate,
       image,
       invoice,
+      officeId,
     } = req.body;
 
     const validAssetTypes = ["Fixed", "Moving"];
@@ -105,7 +106,8 @@ const createAsset = asyncHandler(async (req, res) => {
       !modelNumber ||
       !operatorId ||
       !assetCategories ||
-      !consumptionCategories
+      !consumptionCategories ||
+      !officeId
     ) {
       await session.abortTransaction();
       session.endSession();
@@ -115,7 +117,7 @@ const createAsset = asyncHandler(async (req, res) => {
           new ApiResponse(
             400,
             {},
-            "Asset type, name, operatorId and modelNumber must be provided"
+            "Asset type, name, operatorId,officeId and modelNumber must be provided"
           )
         );
     }
@@ -187,6 +189,15 @@ const createAsset = asyncHandler(async (req, res) => {
         );
     }
 
+    const office = await Office.findById(officeId);
+    if (!office) {
+      await session.abortTransaction();
+      session.endSession();
+      return res
+        .status(404) // Bad Request, invalid role for operator
+        .json(new ApiResponse(404, {}, "Office not found"));
+    }
+
     // const officeAssigned = [];
 
     // for (const officeId of officeIds) {
@@ -237,6 +248,12 @@ const createAsset = asyncHandler(async (req, res) => {
       createdByName: username,
       adminId: userId,
     });
+
+    asset.office.push({ name: office.officeLocation, officeId: officeId });
+
+    office.assets.push({ assetName: name, assetId: asset._id });
+
+    await office.save({ session });
     await asset.save({ session });
 
     let settings = await Settings.findOne({ assetId: asset._id });
