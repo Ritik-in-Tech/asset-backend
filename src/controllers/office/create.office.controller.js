@@ -109,11 +109,11 @@ const createOffice = asyncHandler(async (req, res) => {
 
     const createdOffices = [];
 
-    for (const [officeLocation, parentOfficeLocation] of officesArray) {
+    for (const [officeName, parentOfficeName] of officesArray) {
       // Check if the office already exists for this business
       const existingOffice = await Office.findOne({
         businessId: businessId,
-        officeLocation: officeLocation,
+        officeName: officeName,
       }).session(session);
 
       if (existingOffice) {
@@ -125,18 +125,18 @@ const createOffice = asyncHandler(async (req, res) => {
             new ApiResponse(
               400,
               {},
-              `Office '${officeLocation}' already exists for this business`
+              `Office '${officeName}' already exists for this business`
             )
           );
       }
 
       let parentOfficeId = null;
       let parentOffice;
-      if (parentOfficeLocation) {
+      if (parentOfficeName) {
         // Find the parent office
         parentOffice = await Office.findOne({
           businessId: businessId,
-          officeLocation: parentOfficeLocation,
+          officeName: parentOfficeName,
         }).session(session);
 
         if (!parentOffice) {
@@ -148,7 +148,7 @@ const createOffice = asyncHandler(async (req, res) => {
               new ApiResponse(
                 400,
                 {},
-                `Parent office '${parentOfficeLocation}' not found`
+                `Parent office '${parentOfficeName}' not found`
               )
             );
         }
@@ -159,13 +159,19 @@ const createOffice = asyncHandler(async (req, res) => {
 
       // Create the new office
       const newOffice = new Office({
-        officeLocation: officeLocation,
+        officeName: officeName,
         businessId: businessId,
         parentOfficeId: parentOfficeId,
       });
-      console.log(newOffice);
 
       await newOffice.save({ session });
+
+      business.offices.push({
+        officeName: newOffice.officeName,
+        officeId: newOffice._id,
+      });
+
+      await business.save({ session });
 
       if (parentOffice) {
         parentOffice.subordinates.push(newOffice._id);

@@ -7,12 +7,26 @@ import { UsageHistory } from "../../models/usagehistory.model.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { getCurrentIndianTime } from "../../utils/helpers/time.helper.js";
 import { Settings } from "../../models/settings.model.js";
+import { User } from "../../models/user.model.js";
 
 const addUsageHistory = asyncHandler(async (req, res) => {
   try {
     const { state } = req.body;
     const assetId = req.params.assetId;
     const businessId = req.params.businessId;
+
+    const userId = req.user._id;
+    if (!userId) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Invalid token please log in again"));
+    }
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "User does not exist"));
+    }
 
     if (!assetId) {
       return res
@@ -39,6 +53,42 @@ const addUsageHistory = asyncHandler(async (req, res) => {
         .json(new ApiResponse(404, {}, "Business not found"));
     }
 
+    const businessuser = await BusinessUsers.findOne({
+      businessId: businessId,
+      userId: userId,
+    });
+
+    if (!businessuser) {
+      return res
+        .status(400)
+        .json(
+          new ApiResponse(
+            400,
+            {},
+            "Logged in user is not assigned with the business"
+          )
+        );
+    }
+
+    if (businessuser.role !== "Operator") {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Only operator can operate the asset"));
+    }
+
+    // console.log(asset.operator[0].operatorId.toString());
+    // console.log(userId);
+    if (asset.operator[0].operatorId.toString() !== userId) {
+      return res
+        .status(400)
+        .json(
+          new ApiResponse(
+            400,
+            {},
+            "logged in user have not assigned to operate this asset"
+          )
+        );
+    }
     // Fetch the latest usage history for the asset
     let latestUsageHistory = await UsageHistory.findOne({
       assetID: assetId,
@@ -213,18 +263,17 @@ const getConsumptionDataSpecificAsset = asyncHandler(async (req, res) => {
         );
     }
 
-    const settings = await Settings.findOne({ assetId: assetId });
-    if (!settings) {
-      return res
-        .status(400)
-        .json(new ApiResponse(400, {}, "Please add settings data"));
-    }
+    const targetCategory = asset.fuelType;
+    console.log(targetCategory);
 
-    const targetCategory = asset.consumptionCategories;
+    const consumptionKwh = asset.consumptionRate;
+    console.log(consumptionKwh);
 
-    const categoryConsumption = settings.consumption.find(
-      (item) => item.category.toLowerCase() === targetCategory.toLowerCase()
-    );
+    // const categoryConsumption = settings.consumption.find(
+    //   (item) => item.category.toLowerCase() === targetCategory.toLowerCase()
+    // );
+
+    const categoryConsumption = consumptionKwh * 1.5;
 
     if (!categoryConsumption) {
       return res
@@ -238,8 +287,8 @@ const getConsumptionDataSpecificAsset = asyncHandler(async (req, res) => {
         );
     }
 
-    const consumptionRateKWH = asset.consumptionRate; // this is in KiloWatt per hour
-    const consumptionRateRupees = categoryConsumption.consumptionRate; // this is in rupees per hour
+    const consumptionRateKWH = consumptionKwh; // this is in KiloWatt per hour
+    const consumptionRateRupees = categoryConsumption; // this is in rupees per hour
 
     console.log(
       `Consumption rate for ${targetCategory}: ${consumptionRateKWH} KWH, ${consumptionRateRupees} Rupees/hour`
@@ -331,22 +380,18 @@ const getBusinessConsumptionData = asyncHandler(async (req, res) => {
     for (const usageHistory of usageHistories) {
       const assetId = usageHistory.assetID;
 
-      // Fetch asset details
       const asset = await Asset.findById(assetId);
-      if (!asset) continue; // Skip if asset not found
 
-      // Fetch settings for the asset
-      const settings = await Settings.findOne({ assetId: assetId });
-      if (!settings) continue; // Skip if settings not found
+      const targetCategory = asset.fuelType;
+      console.log(targetCategory);
 
-      const targetCategory = asset.consumptionCategories;
-      const categoryConsumption = settings.consumption.find(
-        (item) => item.category.toLowerCase() === targetCategory.toLowerCase()
-      );
-      if (!categoryConsumption) continue; // Skip if category not found
+      const consumptionKwh = asset.consumptionRate;
+      console.log(consumptionKwh);
 
-      const consumptionRateKWH = asset.consumptionRate; // this is in KiloWatt per hour
-      const consumptionRateRupees = categoryConsumption.consumptionRate; // this is in rupees per hour
+      const categoryConsumption = consumptionKwh * 1.5;
+
+      const consumptionRateKWH = consumptionKwh; // this is in KiloWatt per hour
+      const consumptionRateRupees = categoryConsumption; // this is in rupees per hour
 
       let onTime = null;
 

@@ -85,9 +85,9 @@ const createAsset = asyncHandler(async (req, res) => {
 
     const {
       assetType,
-      assetCategories,
+      equipmentType,
       name,
-      consumptionCategories,
+      fuelType,
       operatorId,
       modelNumber,
       purchaseDate,
@@ -105,8 +105,8 @@ const createAsset = asyncHandler(async (req, res) => {
       !name ||
       !modelNumber ||
       !operatorId ||
-      !assetCategories ||
-      !consumptionCategories ||
+      !equipmentType ||
+      !fuelType ||
       !officeId
     ) {
       await session.abortTransaction();
@@ -198,35 +198,14 @@ const createAsset = asyncHandler(async (req, res) => {
         .json(new ApiResponse(404, {}, "Office not found"));
     }
 
-    // const officeAssigned = [];
-
-    // for (const officeId of officeIds) {
-    //   const office = await Office.findOne({ _id: officeId }).session(session);
-    //   if (!office) {
-    //     await session.abortTransaction();
-    //     session.endSession();
-    //     return res
-    //       .status(400)
-    //       .json(
-    //         new ApiResponse(
-    //           400,
-    //           {},
-    //           `Office with id ${officeId} does not exist`
-    //         )
-    //       );
-    //   }
-    //   // validOfficeIds.push(office._id);
-    //   officeAssigned.push({ officeId: office._id, name: office.officeName });
-    // }
-
     // Create the asset
     const asset = new Asset({
       assetType,
-      assetCategories,
+      equipmentType,
       name,
       businessId: business._id,
       modelNumber,
-      consumptionCategories,
+      fuelType,
       consumptionRate,
       purchaseDate,
       purchaseAmount,
@@ -249,23 +228,18 @@ const createAsset = asyncHandler(async (req, res) => {
       adminId: userId,
     });
 
-    asset.office.push({ name: office.officeLocation, officeId: officeId });
+    asset.office.push({ name: office.officeName, officeId: officeId });
 
     office.assets.push({ assetName: name, assetId: asset._id });
 
+    checkOperatorInBusiness.officeJoined.push({
+      officeName: office.officeName,
+      officeId: officeId,
+    });
+
     await office.save({ session });
     await asset.save({ session });
-
-    let settings = await Settings.findOne({ assetId: asset._id });
-    if (!settings) {
-      settings = new Settings({
-        assetId: asset._id,
-      });
-      await settings.save({ session });
-
-      settings.consumption.push({ category: consumptionCategories });
-      await settings.save({ session });
-    }
+    await checkOperatorInBusiness.save({ session });
 
     // Add the asset details to the business document
     business.assets.push({ name, modelNumber, assetId: asset._id });
