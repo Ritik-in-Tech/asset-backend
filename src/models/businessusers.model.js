@@ -6,6 +6,17 @@ import {
 import { AvailableUserRolesEnum } from "../utils/constant.js";
 import { getCurrentUTCTime } from "../utils/helpers/time.helper.js";
 
+const officesSchema = new Schema(
+  {
+    officeName: commonStringConstraints,
+    officeId: {
+      type: Schema.Types.ObjectId,
+    },
+  },
+  {
+    _id: false,
+  }
+);
 const businessUserSchema = new Schema({
   userId: {
     type: Schema.Types.ObjectId,
@@ -55,12 +66,7 @@ const businessUserSchema = new Schema({
     },
   },
 
-  groupsJoined: {
-    type: [Schema.Types.ObjectId],
-    required: function () {
-      return this.userType !== "Outsider"; // Only required if userType is not "outsider"
-    },
-  },
+  officeJoined: [officesSchema],
   activityViewCounter: {
     type: Number,
     default: 0,

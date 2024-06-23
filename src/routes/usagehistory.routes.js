@@ -9,7 +9,7 @@ import { verifyJWT } from "../middlewares/auth.middlewares.js";
 
 const router = Router();
 
-// router.use(verifyJWT);
+router.use(verifyJWT);
 // router to add the usage History
 router.route("/add-usage-history/:assetId/:businessId").post(addUsageHistory);
 

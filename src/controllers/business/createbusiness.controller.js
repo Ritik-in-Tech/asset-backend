@@ -55,6 +55,7 @@ const createBusiness = asyncHandler(async (req, res) => {
           logo: logo || "",
           country: country,
           city: city,
+          offices: [],
         },
       ],
       { session: session }
@@ -70,30 +71,48 @@ const createBusiness = asyncHandler(async (req, res) => {
       subordinates: [],
       allSubordinates: [],
       myPinnedIssues: [],
-      groupsJoined: [],
+      officeJoined: [],
     };
 
     const office = await Office.findOne({
       businessId: business[0]._id,
-      officeLocation: city,
+      officeName: businessName,
     });
 
     if (office) {
+      await session.abortTransaction();
+      session.endSession();
       return res
         .status(400)
         .json(
-          new ApiResponse(
-            400,
-            {},
-            "Business have already this office locations"
-          )
+          new ApiResponse(400, {}, "Business already has this office location")
         );
     }
 
-    await Office.create({
-      businessId: business[0]._id,
-      officeLocation: city,
-    });
+    // Create the office
+    const newOffice = await Office.create(
+      [
+        {
+          businessId: business[0]._id,
+          officeName: businessName,
+        },
+      ],
+      { session: session }
+    );
+
+    // Update the business document to include the new office
+    await Business.updateOne(
+      { _id: business[0]._id },
+      {
+        $push: {
+          offices: {
+            officeName: businessName,
+            officeId: newOffice[0]._id,
+          },
+        },
+      },
+      { session: session }
+    );
 
     // Create business user entry
     await BusinessUsers.create([adminInfo], { session: session });

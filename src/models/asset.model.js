@@ -6,10 +6,7 @@ import {
 
 const maintainenaceSchema = new Schema(
   {
-    name: {
-      type: String,
-      required: true,
-    },
+    name: commonStringConstraints,
     maintenanceId: { type: Schema.Types.ObjectId },
   },
   {
@@ -80,7 +77,7 @@ const assetSchema = new Schema({
     type: String,
     required: true,
   },
-  consumptionCategories: {
+  fuelType: {
     type: String,
     required: true,
   },
@@ -99,7 +96,7 @@ const assetSchema = new Schema({
   maintainenace: [maintainenaceSchema],
   usageHistory: [usageHistorySchema],
   createdBy: [createdByAsset],
-  assetCategories: commonStringConstraints,
+  equipmentType: commonStringConstraints,
   office: [officeAssignedSchema],
 });
 

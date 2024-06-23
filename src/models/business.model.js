@@ -35,15 +35,17 @@ const assetSchema = new Schema(
 //   }
 // );
 
-// const cityOfficesSchema = new Schema(
-//   {
-//     city: commonStringConstraints,
-//     offices: [commonStringConstraints],
-//   },
-//   {
-//     _id: false,
-//   }
-// );
+const officesSchema = new Schema(
+  {
+    officeName: commonStringConstraints,
+    officeId: {
+      type: Schema.Types.ObjectId,
+    },
+  },
+  {
+    _id: false,
+  }
+);
 
 // Main business schema
 const businessSchema = new Schema({
@@ -67,6 +69,7 @@ const businessSchema = new Schema({
   city: commonStringConstraints,
   country: commonStringConstraints,
   assets: [assetSchema],
+  offices: [officesSchema],
 });
 
 const Business = model("Business", businessSchema);
