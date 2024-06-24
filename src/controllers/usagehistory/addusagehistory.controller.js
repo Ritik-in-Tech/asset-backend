@@ -8,6 +8,7 @@ import { ApiResponse } from "../../utils/ApiResponse.js";
 import { getCurrentIndianTime } from "../../utils/helpers/time.helper.js";
 import { Settings } from "../../models/settings.model.js";
 import { User } from "../../models/user.model.js";
+import createRealtimeDataSender from "../../utils/helpers/realtime.helper.js";
 
 const addUsageHistory = asyncHandler(async (req, res) => {
   try {
@@ -461,9 +462,79 @@ const getBusinessConsumptionData = asyncHandler(async (req, res) => {
   }
 });
 
+const getRealtimeDataSpecificAsset = asyncHandler(async (req, res) => {
+  try {
+    const assetId = req.params.assetId;
+    if (!assetId) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Asset ID is required"));
+    }
+
+    const asset = await Asset.findById(assetId);
+    if (!asset) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Provided asset does not exist"));
+    }
+
+    const targetCategory = asset.fuelType;
+    console.log(targetCategory);
+
+    const consumptionKwh = asset.consumptionRate;
+    console.log(consumptionKwh);
+
+    const categoryConsumption = consumptionKwh * 1.5;
+
+    if (!categoryConsumption) {
+      return res
+        .status(404)
+        .json(
+          new ApiResponse(
+            404,
+            {},
+            `Consumption rate for category '${targetCategory}' not found`
+          )
+        );
+    }
+
+    const consumptionRateKWH = consumptionKwh; // this is in KiloWatt per hour
+    const consumptionRateRupees = categoryConsumption; // this is in rupees per hour
+
+    const getData = () => {
+      const now = new Date();
+      const istOptions = {
+        timeZone: "Asia/Kolkata",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+      };
+      return {
+        timestamp: now.toLocaleString("en-IN", istOptions),
+        consumptionRateKWH,
+        consumptionRateRupees,
+      };
+    };
+
+    const sendRealtimeData = createRealtimeDataSender(getData);
+
+    return sendRealtimeData(req, res);
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json(new ApiResponse(500, { error }, "Internal server error"));
+  }
+});
+
 export {
   addUsageHistory,
   getUsageHistory,
   getConsumptionDataSpecificAsset,
   getBusinessConsumptionData,
+  getRealtimeDataSpecificAsset,
 };
