@@ -12,11 +12,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 const acceptUserJoinRequest = asyncHandler(async (req, res) => {
   const { role, userId, parentId } = req.body;
   const businessId = req.params.businessId;
-  // console.log(businessId);
-  // const parentId = req.user._id;
-  // console.log(parentId);
   const acceptedByName = req.user.name;
-  // console.log(acceptedByName);
   if (!acceptedByName) {
     return res
       .status(400)
@@ -24,7 +20,6 @@ const acceptUserJoinRequest = asyncHandler(async (req, res) => {
   }
 
   try {
-    // Input validation
     if (!businessId) {
       return res
         .status(400)
@@ -41,8 +36,6 @@ const acceptUserJoinRequest = asyncHandler(async (req, res) => {
           )
         );
     }
-
-    // console.log(role);
 
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -118,15 +111,15 @@ const acceptUserJoinRequest = asyncHandler(async (req, res) => {
         userType: "Insider",
         subordinates: [],
         allSubordinates: [],
-        groupsJoined: [],
+        officeJoined: [],
         activityViewCounter: 0,
       };
 
-      const newBusiness = {
-        name: business?.name,
-        userType: "Insider",
-        businessId: businessId,
-      };
+      // const newBusiness = {
+      //   name: business?.name,
+      //   userType: "Insider",
+      //   businessId: businessId,
+      // };
 
       const acceptedRequest = {
         businessId: businessId,
@@ -161,13 +154,12 @@ const acceptUserJoinRequest = asyncHandler(async (req, res) => {
         { session }
       );
 
-      await User.updateOne(
-        { _id: userId },
-        {
-          $push: { businesses: newBusiness },
-        },
-        { session }
-      );
+      user.business.push({
+        name: business.name,
+        userType: "Insider",
+        businessId: businessId,
+      });
+      await user.save({ session });
 
       await Requests.deleteOne(
         { businessId: businessId, userId: userId },
