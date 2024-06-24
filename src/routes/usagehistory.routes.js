@@ -3,6 +3,7 @@ import {
   addUsageHistory,
   getBusinessConsumptionData,
   getConsumptionDataSpecificAsset,
+  getRealtimeDataSpecificAsset,
   getUsageHistory,
 } from "../controllers/usagehistory/addusagehistory.controller.js";
 import { verifyJWT } from "../middlewares/auth.middlewares.js";
@@ -22,5 +23,9 @@ router
 router
   .route("/get-business-consumption-data/:businessId")
   .get(getBusinessConsumptionData);
+
+router
+  .route("/get-realtime-data-asset/:assetId")
+  .get(getRealtimeDataSpecificAsset);
 
 export default router;
