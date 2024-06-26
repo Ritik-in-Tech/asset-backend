@@ -10,86 +10,47 @@ import { Settings } from "../../models/settings.model.js";
 import { User } from "../../models/user.model.js";
 import createRealtimeDataSender from "../../utils/helpers/realtime.helper.js";
 
-const addUsageHistory = asyncHandler(async (req, res) => {
+export const addUsageHistory = async (userId, assetId, state) => {
   try {
-    const { state } = req.body;
-    const assetId = req.params.assetId;
-    const businessId = req.params.businessId;
-
-    const userId = req.user._id;
-    if (!userId) {
-      return res
-        .status(400)
-        .json(new ApiResponse(400, {}, "Invalid token please log in again"));
-    }
+    // Fetch the user
     const user = await User.findById(userId);
     if (!user) {
-      return res
-        .status(400)
-        .json(new ApiResponse(400, {}, "User does not exist"));
+      return { success: false, message: "User does not exist" };
     }
 
-    if (!assetId) {
-      return res
-        .status(400)
-        .json(new ApiResponse(400, {}, "Asset ID is required"));
-    }
-
-    if (!businessId) {
-      return res
-        .status(400)
-        .json(new ApiResponse(400, {}, "Business ID is required"));
-    }
-
+    // Fetch the asset
     const asset = await Asset.findById(assetId);
-
     if (!asset) {
-      return res.status(404).json(new ApiResponse(404, {}, "Asset not found"));
+      return { success: false, message: "Asset not found" };
     }
 
-    const business = await Business.findById(businessId);
+    // Fetch the business
+    const business = await Business.findById(asset.businessId);
     if (!business) {
-      return res
-        .status(404)
-        .json(new ApiResponse(404, {}, "Business not found"));
+      return { success: false, message: "Business not found" };
     }
 
+    // Check if user is assigned to the business
     const businessuser = await BusinessUsers.findOne({
-      businessId: businessId,
+      businessId: business._id,
       userId: userId,
     });
 
-    if (!businessuser) {
-      return res
-        .status(400)
-        .json(
-          new ApiResponse(
-            400,
-            {},
-            "Logged in user is not assigned with the business"
-          )
-        );
+    if (!businessuser || businessuser.role !== "Operator") {
+      return {
+        success: false,
+        message: "User is not authorized to operate this asset",
+      };
     }
 
-    if (businessuser.role !== "Operator") {
-      return res
-        .status(400)
-        .json(new ApiResponse(400, {}, "Only operator can operate the asset"));
-    }
-
-    // console.log(asset.operator[0].operatorId.toString());
-    // console.log(userId);
+    // Check if user is assigned to operate this asset
     if (asset.operator[0].operatorId.toString() !== userId) {
-      return res
-        .status(400)
-        .json(
-          new ApiResponse(
-            400,
-            {},
-            "logged in user have not assigned to operate this asset"
-          )
-        );
+      return {
+        success: false,
+        message: "User is not assigned to operate this asset",
+      };
     }
+
     // Fetch the latest usage history for the asset
     let latestUsageHistory = await UsageHistory.findOne({
       assetID: assetId,
@@ -104,11 +65,10 @@ const addUsageHistory = asyncHandler(async (req, res) => {
 
       // Check if the latest state is the same as the new state being added
       if (latestStateDetail.state === state) {
-        return res
-          .status(400)
-          .json(
-            new ApiResponse(400, {}, "Consecutive states cannot be the same")
-          );
+        return {
+          success: false,
+          message: "Consecutive states cannot be the same",
+        };
       }
 
       // Add the new state detail to the existing usage history
@@ -118,21 +78,17 @@ const addUsageHistory = asyncHandler(async (req, res) => {
       });
       await latestUsageHistory.save();
 
-      return res
-        .status(201)
-        .json(
-          new ApiResponse(
-            201,
-            latestUsageHistory,
-            "Usage history updated successfully"
-          )
-        );
+      return {
+        success: true,
+        data: latestUsageHistory,
+        message: "Usage history updated successfully",
+      };
     }
 
     // If no usage history exists, create a new one
     const newUsageHistory = new UsageHistory({
       stateDetails: [{ state: state, time: getCurrentIndianTime() }],
-      businessId: businessId,
+      businessId: business._id,
       assetID: assetId,
     });
 
@@ -143,28 +99,19 @@ const addUsageHistory = asyncHandler(async (req, res) => {
     asset.usageHistory.push({ usageHistoryId: savedUsageHistory._id });
     await asset.save();
 
-    return res
-      .status(201)
-      .json(
-        new ApiResponse(
-          201,
-          savedUsageHistory,
-          "Usage history added successfully"
-        )
-      );
+    return {
+      success: true,
+      data: savedUsageHistory,
+      message: "Usage history added successfully",
+    };
   } catch (error) {
     console.error(error);
-    return res
-      .status(500)
-      .json(
-        new ApiResponse(
-          500,
-          { error },
-          "An error occurred while adding usage history"
-        )
-      );
+    return {
+      success: false,
+      message: "An error occurred while adding usage history",
+    };
   }
-});
+};
 
 const getUsageHistory = asyncHandler(async (req, res) => {
   try {

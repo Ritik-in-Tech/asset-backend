@@ -1,6 +1,7 @@
 import { User } from "../models/user.model.js";
-import notificationmodel from "../models/notificationmodel.js";
+import NotificationModel from "../models/notificationmodel.js";
 import { sendNotification } from "../controllers/notification.controller.js";
+import { addUsageHistory } from "../controllers/usagehistory/addusagehistory.controller.js";
 
 let issueNsp;
 
@@ -8,7 +9,7 @@ export function initializeNotificationSocket(io) {
   try {
     console.log("***** Io Notifcation started *****");
 
-    issueNsp = io.of("/home/notifications");
+    issueNsp = io.of("/sockets");
 
     issueNsp.on("connection", (socket) => {
       console.log("User Connected: ", socket.id);
@@ -17,6 +18,22 @@ export function initializeNotificationSocket(io) {
         socket.username = username;
         console.log(`User connected on home page: ${username}`);
         socket.join(username);
+      });
+
+      socket.on("asset-state-change", async (data) => {
+        try {
+          const { userId, assetId, state } = data;
+          const result = await addUsageHistory(userId, assetId, state);
+
+          if (result.success) {
+            issueNsp.to(userId).emit("asset-state-updated", result.data);
+          } else {
+            socket.emit("asset-state-update-error", result.message);
+          }
+        } catch (error) {
+          console.error("Error handling asset state change:", error);
+          socket.emit("asset-state-update-error", "An error occurred");
+        }
       });
 
       socket.on("disconnect", () => {
