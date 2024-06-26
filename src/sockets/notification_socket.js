@@ -66,7 +66,10 @@ export function initializeNotificationSocket(io) {
         socket.emit("realtime-data-update", realtimeData);
       } catch (error) {
         console.error("Error fetching realtime data:", error);
-        socket.emit("realtime-data-error", "Failed to fetch realtime data");
+        socket.emit(
+          "realtime-data-error",
+          `Failed to fetch realtime data: ${error}`
+        );
       }
     }
 
