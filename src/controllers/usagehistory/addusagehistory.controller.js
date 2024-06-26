@@ -466,10 +466,6 @@ const getRealtimeDataSpecificAsset = asyncHandler(async (req, res) => {
         consumptionRateRupees,
       };
     };
-
-    const sendRealtimeData = createRealtimeDataSender(getData);
-
-    return sendRealtimeData(req, res);
   } catch (error) {
     console.log(error);
     return res
