@@ -10,7 +10,7 @@ import { Settings } from "../../models/settings.model.js";
 import { User } from "../../models/user.model.js";
 import createRealtimeDataSender from "../../utils/helpers/realtime.helper.js";
 
-export const addUsageHistory = async (userId, assetId, state) => {
+const addUsageHistory = async (userId, assetId, state) => {
   try {
     // Fetch the user
     const user = await User.findById(userId);
