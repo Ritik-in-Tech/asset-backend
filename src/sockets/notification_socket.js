@@ -14,7 +14,16 @@ export function initializeNotificationSocket(io) {
 
     async function getAndEmitRealtimeData(socket, assetId, state) {
       try {
-        const asset = await Asset.findById(assetId);
+        // Check if assetId is an object and extract the id
+        const actualAssetId =
+          typeof assetId === "object" ? assetId.assetId : assetId;
+
+        if (!actualAssetId) {
+          socket.emit("realtime-data-error", "Invalid asset ID provided");
+          return;
+        }
+
+        const asset = await Asset.findById(actualAssetId);
         if (!asset) {
           socket.emit("realtime-data-error", "Provided asset does not exist");
           return;
@@ -68,7 +77,7 @@ export function initializeNotificationSocket(io) {
         console.error("Error fetching realtime data:", error);
         socket.emit(
           "realtime-data-error",
-          `Failed to fetch realtime data: ${error}`
+          `Failed to fetch realtime data: ${error.message}`
         );
       }
     }
