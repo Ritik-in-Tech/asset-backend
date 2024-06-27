@@ -10,9 +10,9 @@ export function initializeDataSocket(io) {
       console.log("User Connected: ", socket.id);
 
       socket.on("user-joined", (username) => {
-        socket.username = username;
-        console.log(`User connected on home page: ${username}`);
-        socket.join(username);
+        socket.username = username.toString();
+        console.log(`User connected on home page: ${username.toString()}`);
+        socket.join(username.toString());
       });
 
       socket.on("disconnect", () => {
@@ -44,7 +44,8 @@ export async function emitRealtimeData(userId, eventData) {
       return;
     }
 
-    issueNsp.to(userId).emit("realtime-data", eventData, (error) => {
+    issueNsp.to(userId.toString()).emit("realtime-data", eventData, (error) => {
+      console.log("This is userId", userId.toString());
       if (error) {
         reject(error);
       } else {
