@@ -10,9 +10,20 @@ export function initializeDataSocket(io) {
       console.log("User Connected: ", socket.id);
 
       socket.on("user-joined", (username) => {
-        socket.username = username.toString();
-        console.log(`User connected on home page: ${username.toString()}`);
-        socket.join(username.toString());
+        if (typeof username === "string") {
+          socket.username = username;
+          console.log(`User connected on home page: ${username}`);
+          socket.join(username);
+        } else if (typeof username === "object" && username !== null) {
+          console.error(
+            "Received an object instead of a string for username:",
+            username
+          );
+          // Handle this case appropriately
+        } else {
+          console.error("Received an invalid username:", username);
+          // Handle this case appropriately
+        }
       });
 
       socket.on("disconnect", () => {
