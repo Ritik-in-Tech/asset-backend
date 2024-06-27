@@ -9,6 +9,7 @@ import { getCurrentIndianTime } from "../../utils/helpers/time.helper.js";
 import { Settings } from "../../models/settings.model.js";
 import { User } from "../../models/user.model.js";
 import createRealtimeDataSender from "../../utils/helpers/realtime.helper.js";
+import { emitRealtimeData } from "../../sockets/emit_data_socket.js";
 
 const addUsageHistory = async (userId, assetId, state) => {
   try {
@@ -411,6 +412,13 @@ const getBusinessConsumptionData = asyncHandler(async (req, res) => {
 
 const getRealtimeDataSpecificAsset = asyncHandler(async (req, res) => {
   try {
+    const userId = req.user._id;
+    if (!userId) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "User ID is required"));
+    }
+
     const assetId = req.params.assetId;
     if (!assetId) {
       return res
@@ -431,7 +439,7 @@ const getRealtimeDataSpecificAsset = asyncHandler(async (req, res) => {
     const consumptionKwh = asset.consumptionRate;
     console.log(consumptionKwh);
 
-    const categoryConsumption = consumptionKwh * 1.5;
+    const categoryConsumption = consumptionKwh * 1.5; // Example multiplier
 
     if (!categoryConsumption) {
       return res
@@ -445,27 +453,40 @@ const getRealtimeDataSpecificAsset = asyncHandler(async (req, res) => {
         );
     }
 
-    const consumptionRateKWH = consumptionKwh; // this is in KiloWatt per hour
-    const consumptionRateRupees = categoryConsumption; // this is in rupees per hour
+    const consumptionRateKWH = consumptionKwh; // in KiloWatt per hour
+    const consumptionRateRupees = categoryConsumption; // in rupees per hour
 
-    const getData = () => {
-      const now = new Date();
-      const istOptions = {
-        timeZone: "Asia/Kolkata",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: true,
-      };
-      return {
-        timestamp: now.toLocaleString("en-IN", istOptions),
-        consumptionRateKWH,
-        consumptionRateRupees,
-      };
+    // Prepare the data to emit
+    const now = new Date();
+    const istOptions = {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
     };
+    const timestamp = now.toLocaleString("en-IN", istOptions);
+
+    const realTimeData = {
+      timestamp,
+      consumptionRateKWH,
+      consumptionRateRupees,
+    };
+
+    emitRealtimeData(userId.toString(), realTimeData);
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          realTimeData,
+          `Real-time data for asset ${asset.name} fetched successfully`
+        )
+      );
   } catch (error) {
     console.log(error);
     return res
