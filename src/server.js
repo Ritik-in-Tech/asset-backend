@@ -37,7 +37,8 @@ const io = new Server(server, {
   },
 });
 
-const notificationNamespace = initializeNotificationSocket(io);
+initializeNotificationSocket(io);
+initializeDataSocket(io);
 
 // Middleware
 if (process.env.NODE_ENV === "development") {
@@ -79,6 +80,7 @@ import uploadDocumentRoutes from "./routes/upload.document.routes.js";
 import uploadfileAWSRoutes from "./routes/upload.file.routes.js";
 import officeRoutes from "./routes/office.routes.js";
 import settingRoutes from "./routes/settings.routes.js";
+import { initializeDataSocket } from "./sockets/emit_data_socket.js";
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/user", userRoutes);
