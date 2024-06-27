@@ -28,13 +28,18 @@ jobs:
     needs: build
     runs-on: self-hosted
     steps:
-      - name: Pull Image from Docker Hub
-        run: sudo docker pull ritik819/asset-backend:latest
-
       - name: Stop and Remove Existing Container (if exists)
         run: |
           sudo docker stop asset-backend-container || true
           sudo docker rm asset-backend-container || true
+
+      - name: Remove old images
+        run: |
+          sudo docker image prune -af --filter "label=com.docker.compose.project=asset-backend"
+          sudo docker rmi ritik819/asset-backend:latest || true
+
+      - name: Pull Image from Docker Hub
+        run: sudo docker pull ritik819/asset-backend:latest
 
       - name: Run Docker Container
         run: |
@@ -50,3 +55,6 @@ jobs:
               -e AWS_ACCESS_KEY='${{secrets.AWS_ACCESS_KEY}}' \
               -e AWS_SECRET_KEY='${{secrets.AWS_SECRET_KEY}}' \
               ritik819/asset-backend:latest
+
+      - name: Clean up old images
+        run: sudo docker image prune -af
