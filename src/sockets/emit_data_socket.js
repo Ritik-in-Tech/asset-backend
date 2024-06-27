@@ -33,7 +33,7 @@ export function initializeDataSocket(io) {
 }
 
 export async function emitRealtimeData(userId, eventData) {
-  console.log(eventData);
+//   console.log(eventData);
   if (issueNsp) {
     if (!userId || !eventData) {
       return;
