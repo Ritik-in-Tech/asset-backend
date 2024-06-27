@@ -33,11 +33,24 @@ export function initializeDataSocket(io) {
 }
 
 export async function emitRealtimeData(userId, eventData) {
-//   console.log(eventData);
-  if (issueNsp) {
-    if (!userId || !eventData) {
+  return new Promise((resolve, reject) => {
+    if (!issueNsp) {
+      reject(new Error("Namespace not initialized"));
       return;
     }
-    issueNsp.to(userId).emit("realtime-data", eventData);
-  }
+
+    if (!userId || !eventData) {
+      reject(new Error("Invalid userId or eventData"));
+      return;
+    }
+
+    issueNsp.to(userId).emit("realtime-data", eventData, (error) => {
+      if (error) {
+        reject(error);
+      } else {
+        console.log(eventData);
+        resolve();
+      }
+    });
+  });
 }
