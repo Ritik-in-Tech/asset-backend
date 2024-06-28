@@ -43,10 +43,9 @@ jobs:
 
       - name: Run Docker Container
         run: |
-          sudo docker run -d -p 3000:3000 --name asset-backend-container \
+          sudo docker run -d -p 443:443 -p 80:80 --name asset-backend-container \
               -e MONGODB_USERNAME="${{ secrets.MONGODB_USERNAME }}" \
               -e MONGODB_PASS="${{ secrets.MONGODB_PASS }}" \
-              -e PORT="${{ secrets.PORT }}" \
               -e NODE_ENV="${{ secrets.NODE_ENV }}" \
               -e ACCESS_TOKEN_EXPIRY="${{ secrets.ACCESS_TOKEN_EXPIRY }}" \
               -e ACCESS_TOKEN_SECRET="${{ secrets.ACCESS_TOKEN_SECRET }}" \
@@ -54,6 +53,8 @@ jobs:
               -e FCM_API_KEY='${{ secrets.FCM_API_KEY }}' \
               -e AWS_ACCESS_KEY='${{secrets.AWS_ACCESS_KEY}}' \
               -e AWS_SECRET_KEY='${{secrets.AWS_SECRET_KEY}}' \
+              -e HTTPS_PORT='${{secrets.HTTPS_PORT}}' \
+              -e HTTP_PORT='${{secrets.HTTP_PORT}}' \
               ritik819/asset-backend:latest
 
       - name: Clean up old images
