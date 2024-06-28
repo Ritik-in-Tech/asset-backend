@@ -1,7 +1,7 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import session from "express-session";
-import dotenv from "dotenv";
+// import dotenv from "dotenv";
 import cors from "cors";
 import bodyParser from "body-parser";
 import { createServer } from "http";
@@ -9,7 +9,7 @@ import { Server } from "socket.io";
 import morgan from "morgan";
 import path from "path";
 import fs from "fs";
-import swaggerUi from "swagger-ui-express";
+// import swaggerUi from "swagger-ui-express";
 import { fileURLToPath } from "url";
 import YAML from "yaml";
 import sdk from "api";
@@ -22,7 +22,7 @@ const file = fs.readFileSync(
   path.resolve(__dirname, "../swagger.yaml"),
   "utf8"
 );
-const swaggerDocument = YAML.parse(file);
+// const swaggerDocument = YAML.parse(file);
 
 import { initializeNotificationSocket } from "./sockets/notification_socket.js";
 
@@ -101,4 +101,4 @@ app.get("*", (req, res) => {
   });
 });
 
-export { server };
+export default app;
