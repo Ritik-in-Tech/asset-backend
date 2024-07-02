@@ -1,9 +1,7 @@
 import { Router } from "express";
 import {
   addUsageHistory,
-  getBusinessConsumptionData,
   getRealtimeDataSpecificAsset,
-  getUsageHistory,
 } from "../controllers/usagehistory/addusagehistory.controller.js";
 import {
   getConsumptionDataSpecificAssetPerDay,
@@ -11,6 +9,12 @@ import {
   getConsumptionDataSpecificAssetPerMinute,
 } from "../controllers/usagehistory/getconsumptionspecifciasset.controller.js";
 import { verifyJWT } from "../middlewares/auth.middlewares.js";
+import { getUsageHistory } from "../controllers/usagehistory/getusagehistory.controller.js";
+import {
+  getBusinessConsumptionData,
+  getBusinessConsumptionDataPerHour,
+  getBusinessConsumptionDataPerMin,
+} from "../controllers/usagehistory/getbusinesscosnumptiondata.controller.js";
 
 const router = Router();
 
@@ -37,7 +41,15 @@ router
   .get(getBusinessConsumptionData);
 
 router
+  .route("/get-business-consumption-data-perminute/:businessId")
+  .get(getBusinessConsumptionDataPerMin);
+
+router
   .route("/get-realtime-data-asset/:assetId")
   .get(getRealtimeDataSpecificAsset);
+
+router
+  .route("/get-business-consumption-perhour/:businessId")
+  .get(getBusinessConsumptionDataPerHour);
 
 export default router;
