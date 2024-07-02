@@ -8,6 +8,7 @@ import { acceptUserJoinRequest } from "../controllers/business/acceptuserjoinreq
 import { getBusinessUsers } from "../controllers/business/getbusinessusers.controller.js";
 import { getBusinessAcceptedRequests } from "../controllers/business/getbusinessacceptedrequests.controller.js";
 import { declineUserJoinRequest } from "../controllers/business/declinejoinrequest.controller.js";
+import { getBusinessDetails } from "../controllers/business/getbusinessdetail.controller.js";
 const router = Router();
 
 router.use(verifyJWT);
@@ -43,5 +44,7 @@ router
 router
   .route("/decline-user-join-request/:businessId")
   .post(declineUserJoinRequest);
+
+router.route("/get-business-details/:businessId").get(getBusinessDetails);
 
 export default router;
