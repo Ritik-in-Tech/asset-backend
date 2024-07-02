@@ -1,4 +1,5 @@
 import { Business } from "../../models/business.model.js";
+import { BusinessUsers } from "../../models/businessusers.model.js";
 import { User } from "../../models/user.model.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
@@ -7,7 +8,20 @@ const updateBusinessDetails = asyncHandler(async (req, res) => {
     const { buisnessName, industryType, city, country, logo } = req.body;
     const businessId = req?.params?.businessId;
 
-    // Check if businessId is provided
+    const userId = req.user._id;
+    if (!userId) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Invalid token please log in again"));
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "User does not exist"));
+    }
+
     if (!businessId) {
       return res
         .status(400)
@@ -19,6 +33,35 @@ const updateBusinessDetails = asyncHandler(async (req, res) => {
       return res
         .status(404)
         .json(new ApiResponse(404, {}, "Business not found"));
+    }
+
+    const businessusers = await BusinessUsers.findOne({
+      businessId: businessId,
+      userId: userId,
+    });
+
+    if (!businessusers || !businessusers.role) {
+      return res
+        .status(400)
+        .json(
+          new ApiResponse(
+            400,
+            {},
+            "Logged in user is not associated with the business"
+          )
+        );
+    }
+
+    if (businessusers.role === "Operator") {
+      return res
+        .status(400)
+        .json(
+          new ApiResponse(
+            400,
+            {},
+            "Operator is not authorized to perform this operation"
+          )
+        );
     }
 
     // Create an empty object to store the fields to update
@@ -73,18 +116,23 @@ const updateBusinessDetails = asyncHandler(async (req, res) => {
     }
 
     // Use $set to update only the provided fields
-    const businessData = await Business.findByIdAndUpdate(
+    const updatedBusiness = await Business.findByIdAndUpdate(
       businessId,
       { $set: updateFields },
       { new: true }
     );
 
     // Check if businessData is found
-    if (!businessData) {
+    if (!updatedBusiness) {
       return res
         .status(404)
         .json(new ApiResponse(404, {}, "Business not found"));
     }
+
+    const businessData = updatedBusiness.toObject();
+    delete businessData.assets;
+    delete businessData.offices;
+    delete businessData.__v;
 
     return res
       .status(200)
