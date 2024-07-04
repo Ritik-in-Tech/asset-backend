@@ -7,15 +7,15 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-export const updateUserName = asyncHandler(async (req, res) => {
+export const updateUserNameAndEmail = asyncHandler(async (req, res) => {
   try {
     const userId = req.user._id;
-    const newName = req.params.newName;
+    const { newName, email } = req.params;
 
     // Update user's name in User collection
     const updatedUser = await User.findOneAndUpdate(
       { _id: userId },
-      { $set: { name: newName } },
+      { $set: { name: newName, email: email } },
       { new: true }
     );
 
@@ -50,7 +50,7 @@ export const updateUserName = asyncHandler(async (req, res) => {
         new ApiResponse(
           200,
           { updatedUser, authToken },
-          "Name updated successfully!!"
+          "Name and email updated successfully!!"
         )
       );
   } catch (error) {

@@ -6,6 +6,8 @@ import { BusinessUsers } from "../../models/businessusers.model.js";
 import { User } from "../../models/user.model.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { Office } from "../../models/office.model.js";
+import { getCurrentIndianTime } from "../../utils/helpers.js";
+import { emitNewNotificationEvent } from "../../sockets/notification_socket.js";
 
 const createBusiness = asyncHandler(async (req, res) => {
   const session = await startSession();
@@ -131,6 +133,16 @@ const createBusiness = asyncHandler(async (req, res) => {
       },
       { session: session }
     );
+
+    const emitData = {
+      content: `Congratulation, ${adminName} your Business ${businessName} created successfully`,
+      notificationCategory: "business",
+      createdDate: getCurrentIndianTime(),
+      businessName: businessName,
+      businessId: business[0]._id,
+    };
+
+    emitNewNotificationEvent(adminId, emitData);
 
     if (result.modifiedCount === 0) {
       await session.abortTransaction();

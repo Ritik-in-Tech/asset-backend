@@ -1,5 +1,8 @@
 import https from "https";
 import { User } from "../models/user.model.js";
+import { fileURLToPath } from "url";
+import path from "path";
+import admin from "firebase-admin";
 
 export async function sendNotification(userId, body) {
   try {
@@ -60,5 +63,49 @@ export async function sendNotification(userId, body) {
     req.end();
   } catch (e) {
     console.error(e.toString());
+  }
+}
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const serviceKeyPath = path.join(__dirname, "../../service_key.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceKeyPath),
+});
+
+export async function sendNotificationNew(userId, body) {
+  try {
+    if (!userId || !body) {
+      console.log("Provide complete information!!");
+      return;
+    }
+
+    const userInfo = await User.findOne({ _id: userId });
+
+    if (!userInfo.fcmToken) {
+      console.log("User has no fcm token!!");
+      return;
+    }
+
+    let token = userInfo.fcmToken;
+    console.log(token);
+    console.log(body);
+
+    const message = {
+      token: token,
+      notification: {
+        title: "AssetCop",
+        body: body,
+      },
+      data: {},
+    };
+
+    console.log("Sending notification:", message.notification);
+    const response = await admin.messaging().send(message);
+    console.log("Successfully sent message:", response);
+  } catch (error) {
+    console.log("Error sending message:", error);
   }
 }
