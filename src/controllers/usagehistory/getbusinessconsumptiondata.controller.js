@@ -1,7 +1,6 @@
 import { Asset } from "../../models/asset.model.js";
 import moment from "moment-timezone";
 import { asyncHandler } from "../../utils/asyncHandler.js";
-import { UsageHistory } from "../../models/usagehistory.model.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 
 const getBusinessConsumptionDataPerDay = asyncHandler(async (req, res) => {
@@ -14,12 +13,14 @@ const getBusinessConsumptionDataPerDay = asyncHandler(async (req, res) => {
     }
 
     const businessConsumption = {};
-    const { fuelType } = req.body;
+    const { fuelType, equipmentType } = req.body;
     let assetDetails;
     let query = { businessId: businessId };
 
     if (fuelType) {
       query.fuelType = fuelType;
+    } else if (equipmentType) {
+      query.equipmentType = equipmentType;
     }
 
     assetDetails = await Asset.find(query).populate({
@@ -127,14 +128,15 @@ const getBusinessConsumptionDataPerMin = asyncHandler(async (req, res) => {
         .json(new ApiResponse(400, {}, "Business ID is required"));
     }
 
-    const { fuelType } = req.body;
+    const { fuelType, equipmentType } = req.body;
     let assetDetails;
     let query = { businessId: businessId };
 
     if (fuelType) {
       query.fuelType = fuelType;
+    } else if (equipmentType) {
+      query.equipmentType = equipmentType;
     }
-
     assetDetails = await Asset.find(query).populate({
       path: "usageHistory.usageHistoryId",
       model: "UsageHistory",
@@ -278,14 +280,15 @@ const getBusinessConsumptionDataPerHour = asyncHandler(async (req, res) => {
         .json(new ApiResponse(400, {}, "Business ID is required"));
     }
 
-    const { fuelType } = req.body;
+    const { fuelType, equipmentType } = req.body;
     let assetDetails;
     let query = { businessId: businessId };
 
     if (fuelType) {
       query.fuelType = fuelType;
+    } else if (equipmentType) {
+      query.equipmentType = equipmentType;
     }
-
     assetDetails = await Asset.find(query).populate({
       path: "usageHistory.usageHistoryId",
       model: "UsageHistory",
@@ -678,12 +681,14 @@ const getBusinessConsumptionLastnDays = asyncHandler(async (req, res) => {
     }
 
     const businessConsumption = {};
-    const { fuelType } = req.body;
+    const { fuelType, equipmentType } = req.body;
     let assetDetails;
     let query = { businessId: businessId };
 
     if (fuelType) {
       query.fuelType = fuelType;
+    } else if (equipmentType) {
+      query.equipmentType = equipmentType;
     }
 
     // Calculate the date range for the last 7 days including today
@@ -812,14 +817,15 @@ const getBusinessConsumptionDataSpecificDay = asyncHandler(async (req, res) => {
       : null;
 
     const businessConsumption = {};
-    const { fuelType } = req.body;
+    const { fuelType, equipmentType } = req.body;
     let assetDetails;
     let query = { businessId: businessId };
 
     if (fuelType) {
       query.fuelType = fuelType;
+    } else if (equipmentType) {
+      query.equipmentType = equipmentType;
     }
-
     assetDetails = await Asset.find(query).populate({
       path: "usageHistory.usageHistoryId",
       model: "UsageHistory",
