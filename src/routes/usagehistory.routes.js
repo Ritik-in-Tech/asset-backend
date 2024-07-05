@@ -11,7 +11,7 @@ import {
 import { verifyJWT } from "../middlewares/auth.middlewares.js";
 import { getUsageHistory } from "../controllers/usagehistory/getusagehistory.controller.js";
 import {
-  getBusinessConsumptionData,
+  getBusinessConsumptionDataPerDay,
   getBusinessConsumptionDataPerHour,
   getBusinessConsumptionDataPerMin,
 } from "../controllers/usagehistory/getbusinesscosnumptiondata.controller.js";
@@ -38,7 +38,7 @@ router
 
 router
   .route("/get-business-consumption-data/:businessId")
-  .get(getBusinessConsumptionData);
+  .get(getBusinessConsumptionDataPerDay);
 
 router
   .route("/get-business-consumption-data-perminute/:businessId")
