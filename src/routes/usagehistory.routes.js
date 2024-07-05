@@ -17,6 +17,7 @@ import {
   getBusinessConsumptionDataPerHour,
   getBusinessConsumptionDataPerMin,
   getBusinessConsumptionDataSpecificDay,
+  getBusinessConsumptionLastnDays,
 } from "../controllers/usagehistory/getbusinessconsumptiondata.controller.js";
 
 const router = Router();
@@ -55,16 +56,20 @@ router
   .route("/get-business-consumption-perhour/:businessId")
   .get(getBusinessConsumptionDataPerHour);
 
-router
-  .route("/get-business-consumption-last7days/:businessId")
-  .get(getBusinessConsumptionDataLast7Days);
+// router
+//   .route("/get-business-consumption-last7days/:businessId")
+//   .get(getBusinessConsumptionDataLast7Days);
 
 router
   .route("/get-business-consumtion-specificday/:businessId")
   .get(getBusinessConsumptionDataSpecificDay);
 
+// router
+//   .route("/get-business-consumption-last15days/:businessId")
+//   .get(getBusinessConsumptionDataLast15Days);
+
 router
-  .route("/get-business-consumption-last15days/:businessId")
-  .get(getBusinessConsumptionDataLast15Days);
+  .route("/get-business-consumption-lastNDays/:businessId/:nthDays")
+  .get(getBusinessConsumptionLastnDays);
 
 export default router;
