@@ -11,10 +11,13 @@ import {
 import { verifyJWT } from "../middlewares/auth.middlewares.js";
 import { getUsageHistory } from "../controllers/usagehistory/getusagehistory.controller.js";
 import {
+  getBusinessConsumptionDataLast15Days,
+  getBusinessConsumptionDataLast7Days,
   getBusinessConsumptionDataPerDay,
   getBusinessConsumptionDataPerHour,
   getBusinessConsumptionDataPerMin,
-} from "../controllers/usagehistory/getbusinesscosnumptiondata.controller.js";
+  getBusinessConsumptionDataSpecificDay,
+} from "../controllers/usagehistory/getbusinessconsumptiondata.controller.js";
 
 const router = Router();
 
@@ -51,5 +54,17 @@ router
 router
   .route("/get-business-consumption-perhour/:businessId")
   .get(getBusinessConsumptionDataPerHour);
+
+router
+  .route("/get-business-consumption-last7days/:businessId")
+  .get(getBusinessConsumptionDataLast7Days);
+
+router
+  .route("/get-business-consumtion-specificday/:businessId")
+  .get(getBusinessConsumptionDataSpecificDay);
+
+router
+  .route("/get-business-consumption-last15days/:businessId")
+  .get(getBusinessConsumptionDataLast15Days);
 
 export default router;

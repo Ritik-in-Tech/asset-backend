@@ -410,8 +410,393 @@ const getBusinessConsumptionDataPerHour = asyncHandler(async (req, res) => {
   }
 });
 
+const getBusinessConsumptionDataLast7Days = asyncHandler(async (req, res) => {
+  try {
+    const businessId = req.params.businessId;
+    if (!businessId) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Business ID is required"));
+    }
+
+    const businessConsumption = {};
+    const { fuelType } = req.body;
+    let assetDetails;
+    let query = { businessId: businessId };
+
+    if (fuelType) {
+      query.fuelType = fuelType;
+    }
+
+    // Calculate the date range for the last 7 days including today
+    const endDate = moment().tz("Asia/Kolkata").format("YYYY-MM-DD");
+    const startDate = moment()
+      .subtract(6, "days")
+      .tz("Asia/Kolkata")
+      .format("YYYY-MM-DD");
+
+    console.log(startDate);
+    console.log(endDate);
+
+    assetDetails = await Asset.find(query).populate({
+      path: "usageHistory.usageHistoryId",
+      model: "UsageHistory",
+    });
+
+    let usageHistories = assetDetails.flatMap((asset) =>
+      asset.usageHistory.map((history) => history.usageHistoryId)
+    );
+
+    for (const usageHistory of usageHistories) {
+      const assetId = usageHistory.assetID;
+      const asset = await Asset.findById(assetId);
+
+      const consumptionKwh = asset.consumptionRate;
+      const categoryConsumption = consumptionKwh * 1.5;
+
+      const consumptionRateKWH = consumptionKwh;
+      const consumptionRateRupees = categoryConsumption;
+
+      let onTime = null;
+
+      usageHistory.stateDetails.forEach((detail, index) => {
+        const date = moment(detail.time)
+          .tz("Asia/Kolkata")
+          .format("YYYY-MM-DD");
+        const time = moment(detail.time).tz("Asia/Kolkata");
+
+        // Skip processing if the date is outside the last 7 days range
+        if (date < startDate || date > endDate) {
+          return;
+        }
+
+        if (!businessConsumption[date]) {
+          businessConsumption[date] = { kWh: 0, rupees: 0 };
+        }
+
+        if (detail.state === "On") {
+          onTime = time;
+        } else if (detail.state === "Off" && onTime) {
+          const durationHours = moment.duration(time.diff(onTime)).asHours();
+          businessConsumption[date].kWh += durationHours * consumptionRateKWH;
+          businessConsumption[date].rupees +=
+            durationHours * consumptionRateRupees;
+          onTime = null;
+        }
+
+        if (index === usageHistory.stateDetails.length - 1 && onTime) {
+          // Assuming the asset runs until the end of the day
+          const endOfDay = moment(onTime).endOf("day");
+          const durationHours = moment
+            .duration(endOfDay.diff(onTime))
+            .asHours();
+          businessConsumption[date].kWh += durationHours * consumptionRateKWH;
+          businessConsumption[date].rupees +=
+            durationHours * consumptionRateRupees;
+          onTime = null; // Reset after final calculation
+        }
+      });
+    }
+
+    // Round the consumption values
+    for (const date in businessConsumption) {
+      businessConsumption[date].kWh =
+        Math.round(businessConsumption[date].kWh * 100) / 100; // Round to 2 decimal places
+      businessConsumption[date].rupees = Math.round(
+        businessConsumption[date].rupees
+      );
+    }
+
+    console.log(businessConsumption);
+
+    // Calculate cumulative consumption for the last 7 days
+    let cumulativeConsumption = { kWh: 0, rupees: 0 };
+    for (const date in businessConsumption) {
+      cumulativeConsumption.kWh += businessConsumption[date].kWh;
+      cumulativeConsumption.rupees += businessConsumption[date].rupees;
+    }
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          cumulativeConsumption,
+          "Cumulative consumption data for the last 7 days retrieved successfully"
+        )
+      );
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json(
+        new ApiResponse(
+          500,
+          { error },
+          "An error occurred while calculating cumulative consumption data"
+        )
+      );
+  }
+});
+
+const getBusinessConsumptionDataLast15Days = asyncHandler(async (req, res) => {
+  try {
+    const businessId = req.params.businessId;
+    if (!businessId) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Business ID is required"));
+    }
+
+    const businessConsumption = {};
+    const { fuelType } = req.body;
+    let assetDetails;
+    let query = { businessId: businessId };
+
+    if (fuelType) {
+      query.fuelType = fuelType;
+    }
+
+    // Calculate the date range for the last 7 days including today
+    const endDate = moment().tz("Asia/Kolkata").format("YYYY-MM-DD");
+    const startDate = moment()
+      .subtract(14, "days")
+      .tz("Asia/Kolkata")
+      .format("YYYY-MM-DD");
+
+    console.log(`Start Date: ${startDate}`);
+    console.log(`End Date: ${endDate}`);
+
+    assetDetails = await Asset.find(query).populate({
+      path: "usageHistory.usageHistoryId",
+      model: "UsageHistory",
+    });
+
+    let usageHistories = assetDetails.flatMap((asset) =>
+      asset.usageHistory.map((history) => history.usageHistoryId)
+    );
+
+    for (const usageHistory of usageHistories) {
+      const assetId = usageHistory.assetID;
+      const asset = await Asset.findById(assetId);
+
+      const consumptionKwh = asset.consumptionRate;
+      const categoryConsumption = consumptionKwh * 1.5;
+
+      const consumptionRateKWH = consumptionKwh;
+      const consumptionRateRupees = categoryConsumption;
+
+      let onTime = null;
+
+      usageHistory.stateDetails.forEach((detail, index) => {
+        const date = moment(detail.time)
+          .tz("Asia/Kolkata")
+          .format("YYYY-MM-DD");
+        const time = moment(detail.time).tz("Asia/Kolkata");
+
+        // Skip processing if the date is outside the last 7 days range
+        if (date < startDate || date > endDate) {
+          return;
+        }
+
+        if (!businessConsumption[date]) {
+          businessConsumption[date] = { kWh: 0, rupees: 0 };
+        }
+
+        if (detail.state === "On") {
+          onTime = time;
+        } else if (detail.state === "Off" && onTime) {
+          const durationHours = moment.duration(time.diff(onTime)).asHours();
+          businessConsumption[date].kWh += durationHours * consumptionRateKWH;
+          businessConsumption[date].rupees +=
+            durationHours * consumptionRateRupees;
+          onTime = null;
+        }
+
+        if (index === usageHistory.stateDetails.length - 1 && onTime) {
+          // Assuming the asset runs until the end of the day
+          const endOfDay = moment(onTime).endOf("day");
+          const durationHours = moment
+            .duration(endOfDay.diff(onTime))
+            .asHours();
+          businessConsumption[date].kWh += durationHours * consumptionRateKWH;
+          businessConsumption[date].rupees +=
+            durationHours * consumptionRateRupees;
+          onTime = null; // Reset after final calculation
+        }
+      });
+    }
+
+    // Round the consumption values
+    for (const date in businessConsumption) {
+      businessConsumption[date].kWh =
+        Math.round(businessConsumption[date].kWh * 100) / 100; // Round to 2 decimal places
+      businessConsumption[date].rupees = Math.round(
+        businessConsumption[date].rupees
+      );
+    }
+
+    console.log(businessConsumption);
+
+    // Calculate cumulative consumption for the last 7 days
+    let cumulativeConsumption = { kWh: 0, rupees: 0 };
+    for (const date in businessConsumption) {
+      cumulativeConsumption.kWh += businessConsumption[date].kWh;
+      cumulativeConsumption.rupees += businessConsumption[date].rupees;
+    }
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          cumulativeConsumption,
+          "Cumulative consumption data for the last 15 days retrieved successfully"
+        )
+      );
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json(
+        new ApiResponse(
+          500,
+          { error },
+          "An error occurred while calculating cumulative consumption data"
+        )
+      );
+  }
+});
+
+const getBusinessConsumptionDataSpecificDay = asyncHandler(async (req, res) => {
+  try {
+    const businessId = req.params.businessId;
+    if (!businessId) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Business ID is required"));
+    }
+
+    const specificDate = req.query.date; // Expecting "yyyy/mm/dd" format
+    const formattedDate = specificDate
+      ? moment(specificDate, "YYYY/MM/DD").format("YYYY-MM-DD")
+      : null;
+
+    const businessConsumption = {};
+    const { fuelType } = req.body;
+    let assetDetails;
+    let query = { businessId: businessId };
+
+    if (fuelType) {
+      query.fuelType = fuelType;
+    }
+
+    assetDetails = await Asset.find(query).populate({
+      path: "usageHistory.usageHistoryId",
+      model: "UsageHistory",
+    });
+
+    let usageHistories = assetDetails.flatMap((asset) =>
+      asset.usageHistory.map((history) => history.usageHistoryId)
+    );
+
+    for (const usageHistory of usageHistories) {
+      const assetId = usageHistory.assetID;
+      const asset = await Asset.findById(assetId);
+
+      const targetCategory = asset.fuelType;
+      const consumptionKwh = asset.consumptionRate;
+      const categoryConsumption = consumptionKwh * 1.5;
+
+      const consumptionRateKWH = consumptionKwh;
+      const consumptionRateRupees = categoryConsumption;
+
+      let onTime = null;
+
+      usageHistory.stateDetails.forEach((detail, index) => {
+        const date = moment(detail.time)
+          .tz("Asia/Kolkata")
+          .format("YYYY-MM-DD");
+        const time = moment(detail.time).tz("Asia/Kolkata");
+
+        if (formattedDate && date !== formattedDate) {
+          // Skip processing if we're looking for a specific date and it's not matching
+          return;
+        }
+
+        if (!businessConsumption[date]) {
+          businessConsumption[date] = { kWh: 0, rupees: 0 };
+        }
+
+        if (detail.state === "On") {
+          onTime = time;
+        } else if (detail.state === "Off" && onTime) {
+          const durationHours = moment.duration(time.diff(onTime)).asHours();
+          businessConsumption[date].kWh += durationHours * consumptionRateKWH;
+          businessConsumption[date].rupees +=
+            durationHours * consumptionRateRupees;
+          onTime = null;
+        }
+
+        if (index === usageHistory.stateDetails.length - 1 && onTime) {
+          // Assuming the asset runs until the end of the day
+          const endOfDay = moment(onTime).endOf("day");
+          const durationHours = moment
+            .duration(endOfDay.diff(onTime))
+            .asHours();
+          businessConsumption[date].kWh += durationHours * consumptionRateKWH;
+          businessConsumption[date].rupees +=
+            durationHours * consumptionRateRupees;
+          onTime = null; // Reset after final calculation
+        }
+      });
+    }
+
+    console.log(businessConsumption);
+
+    // Round the consumption values
+    for (const date in businessConsumption) {
+      businessConsumption[date].kWh =
+        Math.round(businessConsumption[date].kWh * 100) / 100; // Round to 2 decimal places
+      businessConsumption[date].rupees = Math.round(
+        businessConsumption[date].rupees
+      );
+    }
+
+    // If a specific date was requested, filter the result
+    let response = businessConsumption;
+    if (formattedDate) {
+      response = businessConsumption[formattedDate] || { kWh: 0, rupees: 0 };
+    }
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          response,
+          "Business consumption data retrieved successfully"
+        )
+      );
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json(
+        new ApiResponse(
+          500,
+          { error },
+          "An error occurred while calculating business consumption data"
+        )
+      );
+  }
+});
+
 export {
   getBusinessConsumptionDataPerDay,
   getBusinessConsumptionDataPerMin,
   getBusinessConsumptionDataPerHour,
+  getBusinessConsumptionDataLast7Days,
+  getBusinessConsumptionDataSpecificDay,
+  getBusinessConsumptionDataLast15Days,
 };
