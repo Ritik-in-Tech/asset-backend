@@ -4,7 +4,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { UsageHistory } from "../../models/usagehistory.model.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 
-const getBusinessConsumptionData = asyncHandler(async (req, res) => {
+const getBusinessConsumptionDataPerDay = asyncHandler(async (req, res) => {
   try {
     const businessId = req.params.businessId;
     if (!businessId) {
@@ -13,20 +13,30 @@ const getBusinessConsumptionData = asyncHandler(async (req, res) => {
         .json(new ApiResponse(400, {}, "Business ID is required"));
     }
 
-    const usageHistories = await UsageHistory.find({ businessId: businessId });
-    if (usageHistories.length === 0) {
-      return res
-        .status(400)
-        .json(
-          new ApiResponse(400, {}, "No usage histories found for this business")
-        );
+    const businessConsumption = {};
+    const { fuelType } = req.body;
+    let assetDetails;
+    let query = { businessId: businessId };
+
+    if (fuelType) {
+      query.fuelType = fuelType;
     }
 
-    const businessConsumption = {};
+    assetDetails = await Asset.find(query).populate({
+      path: "usageHistory.usageHistoryId",
+      model: "UsageHistory",
+    });
+
+    console.log(assetDetails);
+
+    let usageHistories = assetDetails.flatMap((asset) =>
+      asset.usageHistory.map((history) => history.usageHistoryId)
+    );
+
+    console.log(usageHistories);
 
     for (const usageHistory of usageHistories) {
       const assetId = usageHistory.assetID;
-
       const asset = await Asset.findById(assetId);
 
       const targetCategory = asset.fuelType;
@@ -37,8 +47,8 @@ const getBusinessConsumptionData = asyncHandler(async (req, res) => {
 
       const categoryConsumption = consumptionKwh * 1.5;
 
-      const consumptionRateKWH = consumptionKwh; // this is in KiloWatt per hour
-      const consumptionRateRupees = categoryConsumption; // this is in rupees per hour
+      const consumptionRateKWH = consumptionKwh;
+      const consumptionRateRupees = categoryConsumption;
 
       let onTime = null;
 
@@ -117,14 +127,22 @@ const getBusinessConsumptionDataPerMin = asyncHandler(async (req, res) => {
         .json(new ApiResponse(400, {}, "Business ID is required"));
     }
 
-    const usageHistories = await UsageHistory.find({ businessId: businessId });
-    if (usageHistories.length === 0) {
-      return res
-        .status(400)
-        .json(
-          new ApiResponse(400, {}, "No usage histories found for this business")
-        );
+    const { fuelType } = req.body;
+    let assetDetails;
+    let query = { businessId: businessId };
+
+    if (fuelType) {
+      query.fuelType = fuelType;
     }
+
+    assetDetails = await Asset.find(query).populate({
+      path: "usageHistory.usageHistoryId",
+      model: "UsageHistory",
+    });
+
+    let usageHistories = assetDetails.flatMap((asset) =>
+      asset.usageHistory.map((history) => history.usageHistoryId)
+    );
 
     const aggregatedMinuteConsumption = {};
     for (const usageHistory of usageHistories) {
@@ -260,14 +278,22 @@ const getBusinessConsumptionDataPerHour = asyncHandler(async (req, res) => {
         .json(new ApiResponse(400, {}, "Business ID is required"));
     }
 
-    const usageHistories = await UsageHistory.find({ businessId });
-    if (usageHistories.length === 0) {
-      return res
-        .status(400)
-        .json(
-          new ApiResponse(400, {}, "No usage histories found for this business")
-        );
+    const { fuelType } = req.body;
+    let assetDetails;
+    let query = { businessId: businessId };
+
+    if (fuelType) {
+      query.fuelType = fuelType;
     }
+
+    assetDetails = await Asset.find(query).populate({
+      path: "usageHistory.usageHistoryId",
+      model: "UsageHistory",
+    });
+
+    let usageHistories = assetDetails.flatMap((asset) =>
+      asset.usageHistory.map((history) => history.usageHistoryId)
+    );
 
     const aggregatedHourConsumption = {};
 
@@ -385,7 +411,7 @@ const getBusinessConsumptionDataPerHour = asyncHandler(async (req, res) => {
 });
 
 export {
-  getBusinessConsumptionData,
+  getBusinessConsumptionDataPerDay,
   getBusinessConsumptionDataPerMin,
   getBusinessConsumptionDataPerHour,
 };
