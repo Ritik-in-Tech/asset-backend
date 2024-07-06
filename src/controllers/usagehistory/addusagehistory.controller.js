@@ -168,6 +168,30 @@ const addUsageHistory = asyncHandler(async (req, res) => {
   }
 });
 
+const addOnOffImage = asyncHandler(async (req, res) => {
+  try {
+    const assetId = req.params.assetID;
+    if (!assetId) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Asset id not found"));
+    }
+
+    const usageHistory = await UsageHistory.findById(assetId);
+    if (!usageHistory) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "usageHistory not found"));
+    }
+    const { imageUrl } = re.body;
+    if (!imageUrl) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Image url not provided"));
+    }
+  } catch (error) {}
+});
+
 const getRealtimeDataSpecificAsset = asyncHandler(async (req, res) => {
   try {
     const userId = req.user._id;
