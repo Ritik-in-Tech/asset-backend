@@ -1,5 +1,6 @@
 import { Schema, model } from "mongoose";
 import moment from "moment-timezone";
+import { commonStringConstraints } from "../utils/helpers/schema.helper.js";
 
 function convertToIST(date) {
   return moment(date).tz("Asia/Kolkata").toDate();
@@ -16,6 +17,7 @@ const stateInformationSchema = new Schema(
       get: convertToIST,
       set: convertToIST,
     },
+    imageUrl: commonStringConstraints,
   },
   {
     _id: false,

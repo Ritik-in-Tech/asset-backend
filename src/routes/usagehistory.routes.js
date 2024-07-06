@@ -4,26 +4,25 @@ import {
   getRealtimeDataSpecificAsset,
 } from "../controllers/usagehistory/addusagehistory.controller.js";
 import {
-  getConsumptionDataSpecificAssetPerDay,
-  getConsumptionDataSpecificAssetPerHour,
+  getConsumptionDataSpecificAssetToday,
+  getConsumptionDataSpecificAssetTodayPerHour,
   getConsumptionDataSpecificAssetPerMinute,
+  getConsumptionDataSpecificAssetSpecificDay,
+  getConsumptionSpecificAssetLastNDay,
 } from "../controllers/usagehistory/getconsumptionspecifciasset.controller.js";
 import { verifyJWT } from "../middlewares/auth.middlewares.js";
 import { getUsageHistory } from "../controllers/usagehistory/getusagehistory.controller.js";
 import {
-  getBusinessConsumptionDataLast15Days,
-  getBusinessConsumptionDataLast7Days,
-  getBusinessConsumptionDataPerDay,
-  getBusinessConsumptionDataPerHour,
-  getBusinessConsumptionDataPerMin,
   getBusinessConsumptionDataSpecificDay,
+  getBusinessConsumptionDataToday,
+  getBusinessConsumptionDataTodayPerHour,
+  getBusinessConsumptionDataTodayPerMin,
   getBusinessConsumptionLastnDays,
 } from "../controllers/usagehistory/getbusinessconsumptiondata.controller.js";
 
 const router = Router();
 
 router.use(verifyJWT);
-// router to add the usage History
 router.route("/add-usage-history/:assetId/:businessId").post(addUsageHistory);
 
 router.route("/get-usage-history/:assetId").get(getUsageHistory);
@@ -34,19 +33,19 @@ router
 
 router
   .route("/get-consumption-specific-asset-hour/:assetId")
-  .get(getConsumptionDataSpecificAssetPerHour);
+  .get(getConsumptionDataSpecificAssetTodayPerHour);
 
 router
-  .route("/get-consumption-specific-asset-perday/:assetId")
-  .get(getConsumptionDataSpecificAssetPerDay);
+  .route("/get-consumption-specific-asset-today/:assetId")
+  .get(getConsumptionDataSpecificAssetToday);
 
 router
-  .route("/get-business-consumption-data/:businessId")
-  .get(getBusinessConsumptionDataPerDay);
+  .route("/get-business-consumption-data-today/:businessId")
+  .get(getBusinessConsumptionDataToday);
 
 router
   .route("/get-business-consumption-data-perminute/:businessId")
-  .get(getBusinessConsumptionDataPerMin);
+  .get(getBusinessConsumptionDataTodayPerMin);
 
 router
   .route("/get-realtime-data-asset/:assetId")
@@ -54,22 +53,22 @@ router
 
 router
   .route("/get-business-consumption-perhour/:businessId")
-  .get(getBusinessConsumptionDataPerHour);
-
-// router
-//   .route("/get-business-consumption-last7days/:businessId")
-//   .get(getBusinessConsumptionDataLast7Days);
+  .get(getBusinessConsumptionDataTodayPerHour);
 
 router
   .route("/get-business-consumtion-specificday/:businessId")
   .get(getBusinessConsumptionDataSpecificDay);
 
-// router
-//   .route("/get-business-consumption-last15days/:businessId")
-//   .get(getBusinessConsumptionDataLast15Days);
-
 router
   .route("/get-business-consumption-lastNDays/:businessId/:nthDays")
   .get(getBusinessConsumptionLastnDays);
+
+router
+  .route("/get-consumption-specific-asset-specificday/:assetId")
+  .get(getConsumptionDataSpecificAssetSpecificDay);
+
+router
+  .route("/get-consumption-specificasset-last-Ndays/:assetId/:nthDays")
+  .get(getConsumptionSpecificAssetLastNDay);
 
 export default router;
