@@ -135,7 +135,7 @@ const createBusiness = asyncHandler(async (req, res) => {
     );
 
     const emitData = {
-      content: `Congratulation, ${adminName} your Business ${businessName} created successfully`,
+      content: `Congratulation, ${adminName} your Business ${businessName} created successfully.`,
       notificationCategory: "business",
       createdDate: getCurrentIndianTime(),
       businessName: businessName,
