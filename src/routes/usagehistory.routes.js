@@ -9,6 +9,7 @@ import {
   getConsumptionDataSpecificAssetPerMinute,
   getConsumptionDataSpecificAssetSpecificDay,
   getConsumptionSpecificAssetLastNDay,
+  getConsumptionDataSpecificAssetLastNHour,
 } from "../controllers/usagehistory/getconsumptionspecifciasset.controller.js";
 import { verifyJWT } from "../middlewares/auth.middlewares.js";
 import { getUsageHistory } from "../controllers/usagehistory/getusagehistory.controller.js";
@@ -18,6 +19,7 @@ import {
   getBusinessConsumptionDataTodayPerHour,
   getBusinessConsumptionDataTodayPerMin,
   getBusinessConsumptionLastnDays,
+  getBusinessConsumptionLastNHours,
 } from "../controllers/usagehistory/getbusinessconsumptiondata.controller.js";
 
 const router = Router();
@@ -71,4 +73,13 @@ router
   .route("/get-consumption-specificasset-last-Ndays/:assetId/:nthDays")
   .get(getConsumptionSpecificAssetLastNDay);
 
+router
+  .route("/get-consumption-specificasset-last-nHours/:assetId/:hour")
+  .get(getConsumptionDataSpecificAssetLastNHour);
+
+router
+  .route("/get-business-consumption-lastNhours/:businessId/:hours")
+  .get(getBusinessConsumptionLastNHours);
+
 export default router;
+

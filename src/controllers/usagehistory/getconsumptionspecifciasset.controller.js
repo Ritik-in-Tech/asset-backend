@@ -271,8 +271,8 @@ const getConsumptionDataSpecificAssetTodayPerHour = asyncHandler(
       const consumptionArray = Object.entries(hourlyConsumption).map(
         ([hour, consumption]) => ({
           hour,
-          kWh: Math.round(consumption.kWh * 100) / 100,
-          rupees: Math.round(consumption.rupees * 100) / 100,
+          kWh: Math.floor(consumption.kWh),
+          rupees: Math.floor(consumption.rupees),
         })
       );
 
@@ -307,6 +307,136 @@ const getConsumptionDataSpecificAssetTodayPerHour = asyncHandler(
             500,
             { error },
             "An error occurred while calculating hourly consumption data"
+          )
+        );
+    }
+  }
+);
+
+const getConsumptionDataSpecificAssetLastNHour = asyncHandler(
+  async (req, res) => {
+    try {
+      let { assetId, hour } = req.params;
+      if (!assetId || !hour) {
+        return res
+          .status(400)
+          .json(new ApiResponse(400, {}, "Asset ID is required"));
+      }
+
+      hour = parseInt(hour);
+      const asset = await Asset.findById(assetId);
+      if (!asset) {
+        return res
+          .status(400)
+          .json(new ApiResponse(400, {}, "Provided asset does not exist"));
+      }
+
+      const minutes = hour * 60;
+
+      const usageHistoryDetails = await UsageHistory.findOne({
+        assetID: assetId,
+      });
+      if (!usageHistoryDetails) {
+        return res
+          .status(400)
+          .json(
+            new ApiResponse(
+              400,
+              {},
+              "Provided asset does not have any usage histories"
+            )
+          );
+      }
+
+      const endTime = moment().tz("Asia/Kolkata");
+      const startTime = endTime.clone().subtract(minutes, "minutes");
+
+      const consumptionRateKWH = asset.consumptionRate;
+      const consumptionRateRupees = consumptionRateKWH * 1.5;
+
+      const minutelyConsumption = [];
+
+      const relevantStateDetails = usageHistoryDetails.stateDetails.filter(
+        (detail) =>
+          moment(detail.time)
+            .tz("Asia/Kolkata")
+            .isBetween(startTime, endTime, null, "[]")
+      );
+
+      console.log(relevantStateDetails);
+
+      let onTime = null;
+      let currentMinute = startTime.clone();
+
+      while (currentMinute.isSameOrBefore(endTime)) {
+        const minuteKey = currentMinute.format("HH:mm");
+        const consumptionData = { minute: minuteKey, kWh: 0, rupees: 0 };
+
+        relevantStateDetails.forEach((detail, index) => {
+          const detailTime = moment(detail.time).tz("Asia/Kolkata");
+
+          if (detailTime.isSameOrBefore(currentMinute)) {
+            if (detail.state === "On") {
+              onTime = detailTime;
+            } else if (detail.state === "Off") {
+              onTime = null;
+            }
+          }
+
+          if (
+            onTime &&
+            index === relevantStateDetails.length - 1 &&
+            detail.state === "On"
+          ) {
+            const consumptionEnd = moment.min(
+              currentMinute.clone().add(1, "minute"),
+              endTime
+            );
+            const durationHours = moment
+              .duration(consumptionEnd.diff(currentMinute))
+              .asHours();
+            consumptionData.kWh = durationHours * consumptionRateKWH;
+            consumptionData.rupees = durationHours * consumptionRateRupees;
+          }
+        });
+
+        if (onTime && onTime.isBefore(currentMinute)) {
+          const consumptionEnd = moment.min(
+            currentMinute.clone().add(1, "minute"),
+            endTime
+          );
+          const durationHours = moment
+            .duration(consumptionEnd.diff(currentMinute))
+            .asHours();
+          consumptionData.kWh = durationHours * consumptionRateKWH;
+          consumptionData.rupees = durationHours * consumptionRateRupees;
+        }
+
+        consumptionData.kWh = Math.round(consumptionData.kWh * 1000) / 1000; // Round to 3 decimal places
+        consumptionData.rupees = Math.round(consumptionData.rupees * 100) / 100; // Round to 2 decimal places
+
+        minutelyConsumption.push(consumptionData);
+        currentMinute.add(1, "minute");
+      }
+
+      const responseMessage = `Minute-wise consumption for ${
+        asset.name
+      } retrieved from ${startTime.format("HH:mm")} to ${endTime.format(
+        "HH:mm"
+      )}`;
+
+      return res
+        .status(200)
+        .json(new ApiResponse(200, { minutelyConsumption }, responseMessage));
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(500)
+        .json(
+          new ApiResponse(
+            500,
+            { error },
+            "An error occurred while calculating minute-wise consumption data"
           )
         );
     }
@@ -726,4 +856,5 @@ export {
   getConsumptionDataSpecificAssetToday,
   getConsumptionDataSpecificAssetSpecificDay,
   getConsumptionSpecificAssetLastNDay,
+  getConsumptionDataSpecificAssetLastNHour,
 };
