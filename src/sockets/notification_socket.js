@@ -99,7 +99,7 @@ export async function emitNewNotificationAndAddBusinessEvent(
       return;
     }
 
-    console.log("This mishra.......");
+    // console.log("This mishra.......");
 
     await User.updateOne(
       { _id: userId },
@@ -110,20 +110,25 @@ export async function emitNewNotificationAndAddBusinessEvent(
       }
     );
 
-    console.log("This is userid", userId);
+    let notificationData = await NotificationModel.create({
+      ...eventData,
+      userId,
+    });
 
-    console.log("This is eventData : ", eventData);
-    console.log("This is newBusiness : ", newBusiness);
+    // console.log("This is userid", userId);
+
+    // console.log("This is eventData : ", eventData);
+    // console.log("This is newBusiness : ", newBusiness);
 
     const data = {
       eventData: eventData,
       newBusiness: newBusiness,
     };
 
-    console.log("This is data }", data);
+    // console.log("This is data }", data);
     issueNsp.to(userId).emit("new-notification-add-business", data);
 
-    sendNotification(userId, eventData.content);
+    sendNotificationNew(userId, eventData.content);
   } else {
     throw new Error(
       "Socket.io not initialized. Call initializeActivitySocket(server) first."

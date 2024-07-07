@@ -8,6 +8,8 @@ import { Acceptedrequests } from "../../models/acceptedrequest.model.js";
 // Response and Error handling
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
+import { getCurrentIndianTime } from "../../utils/helpers/time.helper.js";
+import { emitNewNotificationAndAddBusinessEvent } from "../../sockets/notification_socket.js";
 
 const acceptUserJoinRequest = asyncHandler(async (req, res) => {
   const { role, userId, parentId } = req.body;
@@ -115,11 +117,11 @@ const acceptUserJoinRequest = asyncHandler(async (req, res) => {
         activityViewCounter: 0,
       };
 
-      // const newBusiness = {
-      //   name: business?.name,
-      //   userType: "Insider",
-      //   businessId: businessId,
-      // };
+      const newBusiness = {
+        name: business?.name,
+        userType: "Insider",
+        businessId: businessId,
+      };
 
       const acceptedRequest = {
         businessId: businessId,
@@ -154,11 +156,7 @@ const acceptUserJoinRequest = asyncHandler(async (req, res) => {
         { session }
       );
 
-      user.business.push({
-        name: business.name,
-        userType: "Insider",
-        businessId: businessId,
-      });
+      user.business.push(newBusiness);
       await user.save({ session });
 
       await Requests.deleteOne(
@@ -168,20 +166,20 @@ const acceptUserJoinRequest = asyncHandler(async (req, res) => {
 
       await Acceptedrequests.create(acceptedRequest);
 
-      // const emitData = {
-      //   content: `Congratulation, you are added in ${business.name} successfully🥳🥳`,
-      //   notificationCategory: "business",
-      //   createdDate: getCurrentUTCTime(),
-      //   businessName: business.name,
-      //   businessId: businessId,
-      // };
+      const emitData = {
+        content: `Congratulation, you are added in ${business.name} successfully🥳🥳.`,
+        notificationCategory: "business",
+        createdDate: getCurrentIndianTime(),
+        businessName: business.name,
+        businessId: businessId,
+      };
 
-      // emitNewNotificationAndAddBusinessEvent(
-      //   userId,
-      //   businessId,
-      //   emitData,
-      //   newBusiness
-      // );
+      emitNewNotificationAndAddBusinessEvent(
+        userId,
+        businessId,
+        emitData,
+        newBusiness
+      );
 
       await session.commitTransaction();
       session.endSession();

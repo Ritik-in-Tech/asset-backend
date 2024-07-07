@@ -6,6 +6,7 @@ import { BusinessUsers } from "../../models/businessusers.model.js";
 import { Requests } from "../../models/requests.model.js";
 import { Acceptedrequests } from "../../models/acceptedrequest.model.js";
 import { Declinedrequests } from "../../models/declinedrequest.model.js";
+import { getCurrentIndianTime } from "../../utils/helpers/time.helper.js";
 const joinBusiness = catchAsync(async (req, res, next) => {
   const { businessCode } = req.params;
   const userId = req.user._id;
@@ -94,24 +95,24 @@ const joinBusiness = catchAsync(async (req, res, next) => {
 
     await Requests.create(requestedUser);
 
-    // const emitData = {
-    //   content: `New Join Request: ${user.name} is eager to join your business. Act now!`,
-    //   notificationCategory: "business",
-    //   createdDate: getCurrentUTCTime(),
-    //   businessName: businessData.name,
-    //   businessId: businessData._id,
-    // };
+    const emitData = {
+      content: `New Join Request: ${user.name} is eager to join your ${businessData.name} business. Act now!`,
+      notificationCategory: "business",
+      createdDate: getCurrentIndianTime(),
+      businessName: businessData.name,
+      businessId: businessData._id,
+    };
 
-    // const businessAdmins = await Businessusers.find(
-    //   { businessId, role: "Admin" },
-    //   { name: 1, userId: 1 }
-    // );
+    const businessAdmins = await BusinessUsers.find(
+      { businessId, role: "Admin" },
+      { name: 1, userId: 1 }
+    );
 
-    // await Promise.all(
-    //   businessAdmins.map(async (admin) => {
-    //     await emitNewNotificationEvent(admin.userId, emitData);
-    //   })
-    // );
+    await Promise.all(
+      businessAdmins.map(async (admin) => {
+        await emitNewNotificationEvent(admin.userId, emitData);
+      })
+    );
 
     return res
       .status(200)
