@@ -291,6 +291,155 @@ const getBusinessConsumptionDataTodayPerMin = asyncHandler(async (req, res) => {
   }
 });
 
+const getBusinessConsumptionLastNHours = asyncHandler(async (req, res) => {
+  try {
+    const businessId = req.params.businessId;
+    let hours = req.params.hours;
+    if (!businessId || !hours) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Business ID and hours are required "));
+    }
+    hours = parseInt(hours);
+    const minutes = hours * 60;
+
+    const { fuelType, equipmentType } = req.body;
+    let assetDetails;
+    let query = { businessId: businessId };
+
+    if (fuelType) {
+      query.fuelType = fuelType;
+    } else if (equipmentType) {
+      query.equipmentType = equipmentType;
+    }
+    assetDetails = await Asset.find(query).populate({
+      path: "usageHistory.usageHistoryId",
+      model: "UsageHistory",
+    });
+
+    // console.log(assetDetails);
+
+    let usageHistories = assetDetails.flatMap((asset) =>
+      asset.usageHistory.map((history) => history.usageHistoryId)
+    );
+    const endTime = moment().tz("Asia/Kolkata");
+    const startTime = endTime.clone().subtract(minutes, "minutes");
+
+    // console.log(usageHistories);
+
+    const ConsumptionMapLastNHour = new Map();
+    for (const usageHistory of usageHistories) {
+      const assetId = usageHistory.assetID;
+      const asset = await Asset.findById(assetId);
+      const consumptionRateKWH = asset.consumptionRate;
+      const consumptionRateRupees = consumptionRateKWH * 1.5;
+
+      const minutelyConsumption = [];
+
+      const relevantStateDetails = usageHistory.stateDetails.filter((detail) =>
+        moment(detail.time)
+          .tz("Asia/Kolkata")
+          .isBetween(startTime, endTime, null, "[]")
+      );
+
+      console.log(relevantStateDetails);
+
+      let onTime = null;
+      let currentMinute = startTime.clone();
+
+      while (currentMinute.isSameOrBefore(endTime)) {
+        const minuteKey = currentMinute.format("HH:mm");
+        const consumptionData = { minute: minuteKey, kWh: 0, rupees: 0 };
+
+        relevantStateDetails.forEach((detail, index) => {
+          const detailTime = moment(detail.time).tz("Asia/Kolkata");
+
+          if (detailTime.isSameOrBefore(currentMinute)) {
+            if (detail.state === "On") {
+              onTime = detailTime;
+            } else if (detail.state === "Off") {
+              onTime = null;
+            }
+          }
+
+          if (
+            onTime &&
+            index === relevantStateDetails.length - 1 &&
+            detail.state === "On"
+          ) {
+            const consumptionEnd = moment.min(
+              currentMinute.clone().add(1, "minute"),
+              endTime
+            );
+            const durationHours = moment
+              .duration(consumptionEnd.diff(currentMinute))
+              .asHours();
+            consumptionData.kWh = durationHours * consumptionRateKWH;
+            consumptionData.rupees = durationHours * consumptionRateRupees;
+          }
+        });
+
+        if (onTime && onTime.isBefore(currentMinute)) {
+          const consumptionEnd = moment.min(
+            currentMinute.clone().add(1, "minute"),
+            endTime
+          );
+          const durationHours = moment
+            .duration(consumptionEnd.diff(currentMinute))
+            .asHours();
+          consumptionData.kWh = durationHours * consumptionRateKWH;
+          consumptionData.rupees = durationHours * consumptionRateRupees;
+        }
+
+        consumptionData.kWh = Math.round(consumptionData.kWh * 1000) / 1000; // Round to 3 decimal places
+        consumptionData.rupees = Math.round(consumptionData.rupees * 100) / 100; // Round to 2 decimal places
+
+        minutelyConsumption.push(consumptionData);
+        currentMinute.add(1, "minute");
+      }
+
+      ConsumptionMapLastNHour.set(asset.name, minutelyConsumption);
+    }
+
+    // console.log(ConsumptionMapLastNHour);
+
+    const ConsumptionMapObject = Object.fromEntries(ConsumptionMapLastNHour);
+    console.log(ConsumptionMapObject);
+
+    // const aggregatedData = {};
+
+    Object.values(ConsumptionMapObject).forEach((assetData) => {
+      assetData.forEach((minuteData) => {
+        const { minute, kWh, rupees } = minuteData;
+        if (!aggregatedData[minute]) {
+          aggregatedData[minute] = { minute, kWh: 0, rupees: 0 };
+        }
+        aggregatedData[minute].kWh += kWh;
+        aggregatedData[minute].rupees += rupees;
+      });
+    });
+
+    // console.log(aggregatedData);
+
+    const result = Object.values(aggregatedData).map((item) => ({
+      minute: item.minute,
+      kWh: Math.round(item.kWh * 1000) / 1000, // Round to 3 decimal places
+      rupees: Math.round(item.rupees * 100) / 100, // Round to 2 decimal places
+    }));
+
+    result.sort((a, b) => a.minute.localeCompare(b.minute));
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, result, "Consumption fetched successfully"));
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json(new ApiResponse(500, { error }, "Internal server error"));
+  }
+});
+
 const getBusinessConsumptionDataTodayPerHour = asyncHandler(
   async (req, res) => {
     try {
@@ -746,4 +895,5 @@ export {
   getBusinessConsumptionDataTodayPerMin,
   getBusinessConsumptionDataSpecificDay,
   getBusinessConsumptionLastnDays,
+  getBusinessConsumptionLastNHours,
 };
