@@ -2,6 +2,7 @@ import { Asset } from "../../models/asset.model.js";
 import moment from "moment-timezone";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
+const timeZone = "Asia/Kolkata";
 
 const getBusinessConsumptionDataToday = asyncHandler(async (req, res) => {
   try {
@@ -751,6 +752,155 @@ const getBusinessConsumptionLastnDays = asyncHandler(async (req, res) => {
   }
 });
 
+const getBusinessConsumptionMTD = asyncHandler(async (req, res) => {
+  try {
+    const { businessId } = req.params;
+    if (!businessId) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Business Id is not provided"));
+    }
+
+    const { fuelType, equipmentType } = req.body;
+    let assetDetails;
+    let query = { businessId: businessId };
+
+    if (fuelType) {
+      query.fuelType = fuelType;
+    } else if (equipmentType) {
+      query.equipmentType = equipmentType;
+    }
+
+    const startDate = moment().tz(timeZone).startOf("month");
+    const endDate = moment().tz(timeZone).endOf("day");
+    console.log(startDate);
+    console.log(endDate);
+    const dateArray = [];
+    let currentDate = startDate.clone();
+
+    while (currentDate <= endDate) {
+      dateArray.push(currentDate.format("YYYY-MM-DD"));
+      currentDate.add(1, "day");
+    }
+
+    console.log(dateArray);
+    assetDetails = await Asset.find(query).populate({
+      path: "usageHistory.usageHistoryId",
+      model: "UsageHistory",
+    });
+
+    let usageHistories = assetDetails.flatMap((asset) =>
+      asset.usageHistory.map((history) => history.usageHistoryId)
+    );
+
+    const LastNDaysMap = new Map();
+
+    for (const formattedDate of dateArray) {
+      const startOfDay = moment(formattedDate)
+        .tz("Asia/Kolkata")
+        .startOf("day");
+      const endOfDay = moment(formattedDate).tz("Asia/Kolkata").endOf("day");
+      const currentTime = moment().tz("Asia/Kolkata");
+      console.log(startOfDay);
+      console.log(endOfDay);
+      console.log(currentTime);
+
+      const totalConsumptionMap = new Map();
+
+      for (const usageHistory of usageHistories) {
+        const businessConsumption = {};
+        const assetId = usageHistory.assetID;
+        const asset = await Asset.findById(assetId);
+        const consumptionKwh = asset.consumptionRate;
+        const categoryConsumption = consumptionKwh * 1.5;
+
+        const consumptionRateKWH = consumptionKwh;
+        const consumptionRateRupees = categoryConsumption;
+
+        let onTime = null;
+        const todayStateDetails = usageHistory.stateDetails.filter((detail) =>
+          moment(detail.time).tz("Asia/Kolkata").isBetween(startOfDay, endOfDay)
+        );
+
+        console.log(todayStateDetails);
+
+        todayStateDetails.forEach((detail, index) => {
+          const date = moment(detail.time)
+            .tz("Asia/Kolkata")
+            .format("YYYY-MM-DD");
+          const time = moment(detail.time).tz("Asia/Kolkata");
+
+          if (formattedDate && date !== formattedDate) {
+            return;
+          }
+
+          if (!businessConsumption[date]) {
+            businessConsumption[date] = { kWh: 0, rupees: 0 };
+          }
+
+          if (detail.state === "On") {
+            onTime = time;
+          } else if (detail.state === "Off" && onTime) {
+            const durationHours = moment.duration(time.diff(onTime)).asHours();
+            businessConsumption[date].kWh += durationHours * consumptionRateKWH;
+            businessConsumption[date].rupees +=
+              durationHours * consumptionRateRupees;
+            onTime = null;
+          }
+
+          if (index === todayStateDetails.length - 1 && onTime) {
+            const effectiveEndTime = currentTime.isBefore(endOfDay)
+              ? currentTime
+              : endOfDay;
+            const durationHours = moment
+              .duration(effectiveEndTime.diff(onTime))
+              .asHours();
+            businessConsumption[date].kWh += durationHours * consumptionRateKWH;
+            businessConsumption[date].rupees +=
+              durationHours * consumptionRateRupees;
+            onTime = null;
+          }
+        });
+        totalConsumptionMap.set(asset.name, businessConsumption);
+      }
+
+      console.log(totalConsumptionMap);
+      let totalKWh = 0;
+      let totalRupees = 0;
+
+      for (const [appliance, dateData] of totalConsumptionMap) {
+        for (const [date, usage] of Object.entries(dateData)) {
+          totalKWh += usage.kWh;
+          totalRupees += usage.rupees;
+        }
+      }
+
+      totalKWh = Math.floor(totalKWh);
+      totalRupees = Math.floor(totalRupees);
+
+      LastNDaysMap.set(formattedDate, { totalKWh, totalRupees });
+    }
+
+    console.log(LastNDaysMap);
+    const LastNDaysObject = Object.fromEntries(LastNDaysMap);
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          { MTD: LastNDaysObject },
+          `Cumulative consumption data for days retrieved successfully`
+        )
+      );
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json(new ApiResponse(500, { error }, "Internal server error"));
+  }
+});
+
 const getBusinessConsumptionDataSpecificDay = asyncHandler(async (req, res) => {
   try {
     const businessId = req.params.businessId;
@@ -896,4 +1046,5 @@ export {
   getBusinessConsumptionDataSpecificDay,
   getBusinessConsumptionLastnDays,
   getBusinessConsumptionLastNHours,
+  getBusinessConsumptionMTD,
 };
