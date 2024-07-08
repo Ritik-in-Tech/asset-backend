@@ -7,6 +7,7 @@ import { Requests } from "../../models/requests.model.js";
 import { Acceptedrequests } from "../../models/acceptedrequest.model.js";
 import { Declinedrequests } from "../../models/declinedrequest.model.js";
 import { getCurrentIndianTime } from "../../utils/helpers/time.helper.js";
+import { emitNewNotificationEvent } from "../../sockets/notification_socket.js";
 const joinBusiness = catchAsync(async (req, res, next) => {
   const { businessCode } = req.params;
   const userId = req.user._id;
@@ -118,7 +119,7 @@ const joinBusiness = catchAsync(async (req, res, next) => {
       .status(200)
       .json(new ApiResponse(200, {}, "Request sent successfully"));
   } catch (error) {
-    // console.error("Error : ", error);
+    console.error("Error : ", error);
     return res
       .status(500)
       .json(new ApiResponse(500, { error }, "Internal Server Error"));
