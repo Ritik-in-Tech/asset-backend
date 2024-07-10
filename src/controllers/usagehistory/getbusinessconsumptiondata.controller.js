@@ -2,6 +2,7 @@ import { Asset } from "../../models/asset.model.js";
 import moment from "moment-timezone";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
+import { Office } from "../../models/office.model.js";
 const timeZone = "Asia/Kolkata";
 
 const getBusinessConsumptionDataToday = asyncHandler(async (req, res) => {
@@ -13,22 +14,50 @@ const getBusinessConsumptionDataToday = asyncHandler(async (req, res) => {
         .json(new ApiResponse(400, {}, "Business ID is required"));
     }
 
-    const { fuelType, equipmentType } = req.body;
+    const { fuelType, equipmentType, officeId } = req.body;
     let assetDetails;
     let query = { businessId: businessId };
 
     if (fuelType) {
       query.fuelType = fuelType;
+      assetDetails = await Asset.find(query).populate({
+        path: "usageHistory.usageHistoryId",
+        model: "UsageHistory",
+      });
     } else if (equipmentType) {
       query.equipmentType = equipmentType;
+      assetDetails = await Asset.find(query).populate({
+        path: "usageHistory.usageHistoryId",
+        model: "UsageHistory",
+      });
+    } else if (officeId) {
+      const office = await Office.findById(officeId);
+
+      if (!office) {
+        return res
+          .status(400)
+          .json(new ApiResponse(400, {}, "Office not found"));
+      }
+
+      const assetIds = office.assets.map((asset) => asset.assetId);
+
+      assetDetails = await Asset.find({
+        businessId: businessId,
+        _id: { $in: assetIds },
+      }).populate({
+        path: "usageHistory.usageHistoryId",
+        model: "UsageHistory",
+      });
+    } else {
+      assetDetails = await Asset.find(query).populate({
+        path: "usageHistory.usageHistoryId",
+        model: "UsageHistory",
+      });
     }
 
-    assetDetails = await Asset.find(query).populate({
-      path: "usageHistory.usageHistoryId",
-      model: "UsageHistory",
-    });
-
     console.log(assetDetails);
+
+    // console.log(assetDetails);
 
     let usageHistories = assetDetails.flatMap((asset) =>
       asset.usageHistory.map((history) => history.usageHistoryId)
@@ -116,6 +145,17 @@ const getBusinessConsumptionDataToday = asyncHandler(async (req, res) => {
 
     totalKWh = Math.floor(totalKWh);
     totalRupees = Math.floor(totalRupees);
+
+    if (officeId) {
+      const office = await Office.findById(officeId);
+
+      console.log(office);
+
+      office.totalConsumptionKwh += totalKWh;
+      office.totalConsumptionRupees += totalRupees;
+
+      await office.save();
+    }
 
     return res
       .status(200)
@@ -304,21 +344,48 @@ const getBusinessConsumptionLastNHours = asyncHandler(async (req, res) => {
     hours = parseInt(hours);
     const minutes = hours * 60;
 
-    const { fuelType, equipmentType } = req.body;
+    const { fuelType, equipmentType, officeId } = req.body;
     let assetDetails;
     let query = { businessId: businessId };
 
     if (fuelType) {
       query.fuelType = fuelType;
+      assetDetails = await Asset.find(query).populate({
+        path: "usageHistory.usageHistoryId",
+        model: "UsageHistory",
+      });
     } else if (equipmentType) {
       query.equipmentType = equipmentType;
-    }
-    assetDetails = await Asset.find(query).populate({
-      path: "usageHistory.usageHistoryId",
-      model: "UsageHistory",
-    });
+      assetDetails = await Asset.find(query).populate({
+        path: "usageHistory.usageHistoryId",
+        model: "UsageHistory",
+      });
+    } else if (officeId) {
+      const office = await Office.findById(officeId);
 
-    // console.log(assetDetails);
+      if (!office) {
+        return res
+          .status(400)
+          .json(new ApiResponse(400, {}, "Office not found"));
+      }
+
+      const assetIds = office.assets.map((asset) => asset.assetId);
+
+      assetDetails = await Asset.find({
+        businessId: businessId,
+        _id: { $in: assetIds },
+      }).populate({
+        path: "usageHistory.usageHistoryId",
+        model: "UsageHistory",
+      });
+    } else {
+      assetDetails = await Asset.find(query).populate({
+        path: "usageHistory.usageHistoryId",
+        model: "UsageHistory",
+      });
+    }
+
+    console.log(assetDetails);
 
     let usageHistories = assetDetails.flatMap((asset) =>
       asset.usageHistory.map((history) => history.usageHistoryId)
@@ -451,21 +518,48 @@ const getBusinessConsumptionDataTodayPerHour = asyncHandler(
           .json(new ApiResponse(400, {}, "Business ID is required"));
       }
 
-      const { fuelType, equipmentType } = req.body;
+      const { fuelType, equipmentType, officeId } = req.body;
       let assetDetails;
       let query = { businessId: businessId };
 
       if (fuelType) {
         query.fuelType = fuelType;
+        assetDetails = await Asset.find(query).populate({
+          path: "usageHistory.usageHistoryId",
+          model: "UsageHistory",
+        });
       } else if (equipmentType) {
         query.equipmentType = equipmentType;
-      }
-      assetDetails = await Asset.find(query).populate({
-        path: "usageHistory.usageHistoryId",
-        model: "UsageHistory",
-      });
+        assetDetails = await Asset.find(query).populate({
+          path: "usageHistory.usageHistoryId",
+          model: "UsageHistory",
+        });
+      } else if (officeId) {
+        const office = await Office.findById(officeId);
 
-      // console.log(assetDetails);
+        if (!office) {
+          return res
+            .status(400)
+            .json(new ApiResponse(400, {}, "Office not found"));
+        }
+
+        const assetIds = office.assets.map((asset) => asset.assetId);
+
+        assetDetails = await Asset.find({
+          businessId: businessId,
+          _id: { $in: assetIds },
+        }).populate({
+          path: "usageHistory.usageHistoryId",
+          model: "UsageHistory",
+        });
+      } else {
+        assetDetails = await Asset.find(query).populate({
+          path: "usageHistory.usageHistoryId",
+          model: "UsageHistory",
+        });
+      }
+
+      console.log(assetDetails);
 
       let usageHistories = assetDetails.flatMap((asset) =>
         asset.usageHistory.map((history) => history.usageHistoryId)
@@ -601,15 +695,48 @@ const getBusinessConsumptionLastnDays = asyncHandler(async (req, res) => {
         .json(new ApiResponse(400, {}, "Business ID is required"));
     }
 
-    const { fuelType, equipmentType } = req.body;
+    const { fuelType, equipmentType, officeId } = req.body;
     let assetDetails;
     let query = { businessId: businessId };
 
     if (fuelType) {
       query.fuelType = fuelType;
+      assetDetails = await Asset.find(query).populate({
+        path: "usageHistory.usageHistoryId",
+        model: "UsageHistory",
+      });
     } else if (equipmentType) {
       query.equipmentType = equipmentType;
+      assetDetails = await Asset.find(query).populate({
+        path: "usageHistory.usageHistoryId",
+        model: "UsageHistory",
+      });
+    } else if (officeId) {
+      const office = await Office.findById(officeId);
+
+      if (!office) {
+        return res
+          .status(400)
+          .json(new ApiResponse(400, {}, "Office not found"));
+      }
+
+      const assetIds = office.assets.map((asset) => asset.assetId);
+
+      assetDetails = await Asset.find({
+        businessId: businessId,
+        _id: { $in: assetIds },
+      }).populate({
+        path: "usageHistory.usageHistoryId",
+        model: "UsageHistory",
+      });
+    } else {
+      assetDetails = await Asset.find(query).populate({
+        path: "usageHistory.usageHistoryId",
+        model: "UsageHistory",
+      });
     }
+
+    console.log(assetDetails);
 
     // Calculate the date range for the last n days including today
     const endDate = moment().tz("Asia/Kolkata").endOf("day");
@@ -628,11 +755,6 @@ const getBusinessConsumptionLastnDays = asyncHandler(async (req, res) => {
 
     // console.log(endDate.format("YYYY-MM-DD HH:mm:ss"));
     // console.log(dateArray);
-
-    assetDetails = await Asset.find(query).populate({
-      path: "usageHistory.usageHistoryId",
-      model: "UsageHistory",
-    });
 
     let usageHistories = assetDetails.flatMap((asset) =>
       asset.usageHistory.map((history) => history.usageHistoryId)
@@ -761,15 +883,48 @@ const getBusinessConsumptionMTD = asyncHandler(async (req, res) => {
         .json(new ApiResponse(400, {}, "Business Id is not provided"));
     }
 
-    const { fuelType, equipmentType } = req.body;
+    const { fuelType, equipmentType, officeId } = req.body;
     let assetDetails;
     let query = { businessId: businessId };
 
     if (fuelType) {
       query.fuelType = fuelType;
+      assetDetails = await Asset.find(query).populate({
+        path: "usageHistory.usageHistoryId",
+        model: "UsageHistory",
+      });
     } else if (equipmentType) {
       query.equipmentType = equipmentType;
+      assetDetails = await Asset.find(query).populate({
+        path: "usageHistory.usageHistoryId",
+        model: "UsageHistory",
+      });
+    } else if (officeId) {
+      const office = await Office.findById(officeId);
+
+      if (!office) {
+        return res
+          .status(400)
+          .json(new ApiResponse(400, {}, "Office not found"));
+      }
+
+      const assetIds = office.assets.map((asset) => asset.assetId);
+
+      assetDetails = await Asset.find({
+        businessId: businessId,
+        _id: { $in: assetIds },
+      }).populate({
+        path: "usageHistory.usageHistoryId",
+        model: "UsageHistory",
+      });
+    } else {
+      assetDetails = await Asset.find(query).populate({
+        path: "usageHistory.usageHistoryId",
+        model: "UsageHistory",
+      });
     }
+
+    console.log(assetDetails);
 
     const startDate = moment().tz(timeZone).startOf("month");
     const endDate = moment().tz(timeZone).endOf("day");
@@ -784,10 +939,6 @@ const getBusinessConsumptionMTD = asyncHandler(async (req, res) => {
     }
 
     console.log(dateArray);
-    assetDetails = await Asset.find(query).populate({
-      path: "usageHistory.usageHistoryId",
-      model: "UsageHistory",
-    });
 
     let usageHistories = assetDetails.flatMap((asset) =>
       asset.usageHistory.map((history) => history.usageHistoryId)
@@ -918,19 +1069,48 @@ const getBusinessConsumptionDataSpecificDay = asyncHandler(async (req, res) => {
     console.log("Hello");
     console.log(typeof formattedDate);
 
-    const { fuelType, equipmentType } = req.body;
+    const { fuelType, equipmentType, officeId } = req.body;
     let assetDetails;
     let query = { businessId: businessId };
 
     if (fuelType) {
       query.fuelType = fuelType;
+      assetDetails = await Asset.find(query).populate({
+        path: "usageHistory.usageHistoryId",
+        model: "UsageHistory",
+      });
     } else if (equipmentType) {
       query.equipmentType = equipmentType;
+      assetDetails = await Asset.find(query).populate({
+        path: "usageHistory.usageHistoryId",
+        model: "UsageHistory",
+      });
+    } else if (officeId) {
+      const office = await Office.findById(officeId);
+
+      if (!office) {
+        return res
+          .status(400)
+          .json(new ApiResponse(400, {}, "Office not found"));
+      }
+
+      const assetIds = office.assets.map((asset) => asset.assetId);
+
+      assetDetails = await Asset.find({
+        businessId: businessId,
+        _id: { $in: assetIds },
+      }).populate({
+        path: "usageHistory.usageHistoryId",
+        model: "UsageHistory",
+      });
+    } else {
+      assetDetails = await Asset.find(query).populate({
+        path: "usageHistory.usageHistoryId",
+        model: "UsageHistory",
+      });
     }
-    assetDetails = await Asset.find(query).populate({
-      path: "usageHistory.usageHistoryId",
-      model: "UsageHistory",
-    });
+
+    console.log(assetDetails);
 
     let usageHistories = assetDetails.flatMap((asset) =>
       asset.usageHistory.map((history) => history.usageHistoryId)
