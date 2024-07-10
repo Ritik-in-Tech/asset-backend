@@ -25,7 +25,14 @@ const getOfficeHierarchy = asyncHandler(async (req, res) => {
     }
     const offices = await Office.find(
       { businessId: businessId },
-      { subordinates: 1, officeName: 1, _id: 1 }
+      {
+        subordinates: 1,
+        officeName: 1,
+        _id: 1,
+        totalConsumptionKwh,
+        totalConsumptionRupees,
+        assets,
+      }
     );
 
     let nodes = [];
@@ -36,6 +43,9 @@ const getOfficeHierarchy = asyncHandler(async (req, res) => {
         id: record._id.toString(),
         label: {
           office: record.officeName,
+          consumptionKwh: record.totalConsumptionKwh,
+          consumptionRupess: record.totalConsumptionRupees,
+          numberOfAssets: record.assets.length,
           officeId: record._id.toString(),
         },
       };
