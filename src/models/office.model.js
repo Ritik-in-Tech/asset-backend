@@ -27,6 +27,14 @@ const officeSchema = new Schema({
     type: [Schema.Types.ObjectId],
   },
   officeName: commonStringConstraints,
+  totalConsumptionKwh: {
+    type: Number,
+    default: 0,
+  },
+  totalConsumptionRupees: {
+    type: Number,
+    default: 0,
+  },
   assets: [assetSchema],
 });
 
