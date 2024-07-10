@@ -29,9 +29,9 @@ const getOfficeHierarchy = asyncHandler(async (req, res) => {
         subordinates: 1,
         officeName: 1,
         _id: 1,
-        totalConsumptionKwh,
-        totalConsumptionRupees,
-        assets,
+        totalConsumptionKwh: 1,
+        totalConsumptionRupees: 1,
+        assets: 1,
       }
     );
 
@@ -43,8 +43,8 @@ const getOfficeHierarchy = asyncHandler(async (req, res) => {
         id: record._id.toString(),
         label: {
           office: record.officeName,
-          consumptionKwh: record.totalConsumptionKwh,
-          consumptionRupess: record.totalConsumptionRupees,
+          consumptionKwh: record.totalConsumptionKwh ?? 0,
+          consumptionRupess: record.totalConsumptionRupees ?? 0,
           numberOfAssets: record.assets.length,
           officeId: record._id.toString(),
         },
