@@ -203,8 +203,9 @@ const loginWithOTP = asyncHandler(async (req, res) => {
 
     let phoneNumWithCountryCode = `${countryCode}${number}`;
     phoneNumWithCountryCode = phoneNumWithCountryCode.substring(1);
+    const template_id = process.env.TEMPELATE_ID;
 
-    const url = `https://control.msg91.com/api/v5/otp?template_id=657bf14ed6fc0578437ea412&mobile=${phoneNumWithCountryCode}`;
+    const url = `https://control.msg91.com/api/v5/otp?template_id=${template_id}&mobile=${phoneNumWithCountryCode}`;
 
     const response = await axios.post(url, payload, { headers });
     // console.log(response.data);
