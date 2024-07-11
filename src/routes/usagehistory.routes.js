@@ -45,11 +45,11 @@ router
 
 router
   .route("/get-business-consumption-data-today/:businessId")
-  .get(getBusinessConsumptionDataToday);
+  .post(getBusinessConsumptionDataToday);
 
 router
   .route("/get-business-consumption-data-perminute/:businessId")
-  .get(getBusinessConsumptionDataTodayPerMin);
+  .post(getBusinessConsumptionDataTodayPerMin);
 
 router
   .route("/get-realtime-data-asset/:assetId")
@@ -57,15 +57,15 @@ router
 
 router
   .route("/get-business-consumption-perhour/:businessId")
-  .get(getBusinessConsumptionDataTodayPerHour);
+  .post(getBusinessConsumptionDataTodayPerHour);
 
 router
   .route("/get-business-consumtion-specificday/:businessId")
-  .get(getBusinessConsumptionDataSpecificDay);
+  .post(getBusinessConsumptionDataSpecificDay);
 
 router
   .route("/get-business-consumption-lastNDays/:businessId/:nthDays")
-  .get(getBusinessConsumptionLastnDays);
+  .post(getBusinessConsumptionLastnDays);
 
 router
   .route("/get-consumption-specific-asset-specificday/:assetId")
@@ -81,11 +81,11 @@ router
 
 router
   .route("/get-business-consumption-lastNhours/:businessId/:hours")
-  .get(getBusinessConsumptionLastNHours);
+  .post(getBusinessConsumptionLastNHours);
 
 router
   .route("/get-business-consumption-MTD/:businessId")
-  .get(getBusinessConsumptionMTD);
+  .post(getBusinessConsumptionMTD);
 
 router
   .route("/get-business-specific-asset-MTD/:assetId")

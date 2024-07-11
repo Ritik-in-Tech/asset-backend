@@ -474,7 +474,7 @@ const getBusinessConsumptionLastNHours = asyncHandler(async (req, res) => {
     const ConsumptionMapObject = Object.fromEntries(ConsumptionMapLastNHour);
     console.log(ConsumptionMapObject);
 
-    // const aggregatedData = {};
+    const aggregatedData = {};
 
     Object.values(ConsumptionMapObject).forEach((assetData) => {
       assetData.forEach((minuteData) => {
