@@ -1,10 +1,11 @@
 import { Schema, model } from "mongoose";
 import { commonStringConstraints } from "../utils/helpers/schema.helper.js";
 
-const consumptionData = new Schema(
+const assetInformation = new Schema(
   {
-    category: commonStringConstraints,
-    consumptionRate: {
+    fuelType: commonStringConstraints,
+    units: commonStringConstraints,
+    value: {
       type: Number,
       default: 0,
     },
@@ -15,12 +16,11 @@ const consumptionData = new Schema(
 );
 
 const settingsSchema = new Schema({
-  assetId: {
+  businessId: {
     type: Schema.Types.ObjectId,
     required: true,
-    ref: "Assets",
   },
-  consumption: [consumptionData],
+  assetInformation: [assetInformation],
 });
 
 const Settings = model("Settings", settingsSchema);

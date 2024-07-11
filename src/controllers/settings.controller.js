@@ -1,61 +1,127 @@
-import { Asset } from "../models/asset.model.js";
 import { Business } from "../models/business.model.js";
 import { Settings } from "../models/settings.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { User } from "../models/user.model.js";
+import { BusinessUsers } from "../models/businessusers.model.js";
 
-const addSettingsData = asyncHandler(async (req, res) => {
+const addSettingsBusinessData = asyncHandler(async (req, res) => {
   try {
-    const assetId = req.params.assetId;
-    if (!assetId) {
+    const businessId = req.params.businessId;
+    if (!businessId) {
       return res
         .status(400)
-        .json(new ApiResponse(400, {}, "Please provide assetId in params"));
+        .json(new ApiResponse(400, {}, "Business Id is not provided"));
     }
 
-    const asset = await Asset.findById(assetId);
-    if (!asset) {
-      return res.status(400).json(new ApiResponse(400, {}, "Asset not found"));
+    const business = await Business.findById(businessId);
+    if (!business) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Business not found"));
     }
 
-    const { category, consumptionRate } = req.body;
+    const userId = req.user._id;
+    if (!userId) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Please log in again"));
+    }
 
-    // Check if settings for the businessId already exist
-    let settings = await Settings.findOne({ assetId: assetId });
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(400).json(new ApiResponse(400, {}, "User not found"));
+    }
+
+    const businessuser = await BusinessUsers.findOne({
+      businessId: businessId,
+      userId: userId,
+    });
+
+    if (!businessuser || businessuser.role == "Operator") {
+      return res
+        .status(400)
+        .json(
+          new ApiResponse(
+            400,
+            {},
+            "Only Admin and MiniAdmin is allowed to do this operation"
+          )
+        );
+    }
+
+    const { assetSettings } = req.body;
+
+    if (!Array.isArray(assetSettings) || assetSettings.length === 0) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Invalid assetSettings data"));
+    }
+
+    let settings = await Settings.findOne({ businessId });
 
     if (!settings) {
-      // If settings don't exist, create a new one
-      settings = new Settings({
-        assetId: assetId,
-        consumption: [],
-      });
+      settings = new Settings({ businessId, assetInformation: [] });
     }
 
-    if (category && consumptionRate) {
-      const existingConsumption = settings.consumption.find(
-        (item) => item.category === category
+    assetSettings.forEach((asset) => {
+      const { fuelType, units, value } = asset;
+
+      const existingAssetIndex = settings.assetInformation.findIndex(
+        (item) => item.fuelType === fuelType
       );
 
-      if (existingConsumption) {
-        existingConsumption.consumptionRate = consumptionRate;
+      if (existingAssetIndex !== -1) {
+        settings.assetInformation[existingAssetIndex] = {
+          fuelType,
+          units,
+          value,
+        };
       } else {
-        settings.consumption.push({
-          category: category,
-          consumptionRate: consumptionRate,
-        });
+        settings.assetInformation.push({ fuelType, units, value });
       }
-    }
+    });
 
     await settings.save();
 
     return res
-      .status(201)
+      .status(200)
+      .json(new ApiResponse(200, settings, "Settings updated successfully"));
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json(new ApiResponse(500, { error }, "Internal server error"));
+  }
+});
+
+const getSettingsData = asyncHandler(async (req, res) => {
+  try {
+    const businessId = req.params.businessId;
+    if (!businessId) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Business Id is not provided"));
+    }
+
+    const business = await Business.findById(businessId);
+    if (!business) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Business  not found"));
+    }
+
+    const settingsData = await Settings.findOne({ businessId: businessId });
+    if (!settingsData) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "Not any settings data found"));
+    }
+
+    return res
+      .status(200)
       .json(
-        new ApiResponse(
-          201,
-          { settings },
-          "Settings created/updated successfully!"
-        )
+        new ApiResponse(200, { settingsData }, "Data fetched successfully")
       );
   } catch (error) {
     console.log(error);
@@ -65,4 +131,4 @@ const addSettingsData = asyncHandler(async (req, res) => {
   }
 });
 
-export { addSettingsData };
+export { addSettingsBusinessData, getSettingsData };
