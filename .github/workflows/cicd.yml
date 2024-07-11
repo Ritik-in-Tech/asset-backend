@@ -50,7 +50,7 @@ jobs:
               -e ACCESS_TOKEN_EXPIRY="${{ secrets.ACCESS_TOKEN_EXPIRY }}" \
               -e ACCESS_TOKEN_SECRET="${{ secrets.ACCESS_TOKEN_SECRET }}" \
               -e AUTH_KEY="${{ secrets.AUTH_KEY }}" \
-              -e TEMPELATE_ID='${{secrets.TEMPELATE_ID}}'
+              -e TEMPELATE_ID='${{secrets.TEMPELATE_ID}}' \
               -e FCM_API_KEY='${{ secrets.FCM_API_KEY }}' \
               -e AWS_ACCESS_KEY='${{secrets.AWS_ACCESS_KEY}}' \
               -e AWS_SECRET_KEY='${{secrets.AWS_SECRET_KEY}}' \
