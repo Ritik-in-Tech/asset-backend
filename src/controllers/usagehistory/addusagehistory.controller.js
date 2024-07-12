@@ -177,19 +177,45 @@ const addOnOffImage = asyncHandler(async (req, res) => {
         .json(new ApiResponse(400, {}, "Asset id not found"));
     }
 
-    const usageHistory = await UsageHistory.findById(assetId);
+    const usageHistory = await UsageHistory.findOne({ assetID: assetId });
     if (!usageHistory) {
       return res
         .status(400)
-        .json(new ApiResponse(400, {}, "usageHistory not found"));
+        .json(new ApiResponse(400, {}, "UsageHistory not found"));
     }
-    const { imageUrl } = re.body;
+
+    const { imageUrl } = req.body;
     if (!imageUrl) {
       return res
         .status(400)
         .json(new ApiResponse(400, {}, "Image url not provided"));
     }
-  } catch (error) {}
+
+    // Check if stateDetails array is not empty
+    if (usageHistory.stateDetails.length === 0) {
+      return res
+        .status(400)
+        .json(
+          new ApiResponse(400, {}, "No state details found in usageHistory")
+        );
+    }
+
+    // Update the imageUrl of the last entry in the stateDetails array
+    usageHistory.stateDetails[usageHistory.stateDetails.length - 1].imageUrl =
+      imageUrl;
+
+    // Save the updated document
+    await usageHistory.save();
+
+    return res.json(
+      new ApiResponse(200, usageHistory, "Image URL added successfully")
+    );
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json(new ApiResponse(500, { error }, "Internal server error"));
+  }
 });
 
 const getRealtimeDataSpecificAsset = asyncHandler(async (req, res) => {
@@ -277,4 +303,4 @@ const getRealtimeDataSpecificAsset = asyncHandler(async (req, res) => {
   }
 });
 
-export { addUsageHistory, getRealtimeDataSpecificAsset };
+export { addUsageHistory, getRealtimeDataSpecificAsset, addOnOffImage };
