@@ -9,6 +9,10 @@ import { getBusinessUsers } from "../controllers/business/getbusinessusers.contr
 import { getBusinessAcceptedRequests } from "../controllers/business/getbusinessacceptedrequests.controller.js";
 import { declineUserJoinRequest } from "../controllers/business/declinejoinrequest.controller.js";
 import { getBusinessDetails } from "../controllers/business/getbusinessdetail.controller.js";
+import { promoteUser } from "../controllers/business/promotouser.controller.js";
+import { demoteUser } from "../controllers/business/demotouser.controller.js";
+import { promoteToAdmin } from "../controllers/business/promotetoadmin.controller.js";
+import { changeManager } from "../controllers/business/changemanager.controller.js";
 const router = Router();
 
 router.use(verifyJWT);
@@ -46,5 +50,15 @@ router
   .post(declineUserJoinRequest);
 
 router.route("/get-business-details/:businessId").get(getBusinessDetails);
+
+router.route("/promotion/:businessId").patch(promoteUser);
+
+router.route("/demote/:businessId").patch(demoteUser);
+
+router
+  .route("/promote/admin/:businessId/:userIdToPromote")
+  .patch(promoteToAdmin);
+
+router.route("/change-manager/:businessId/:userId").patch(changeManager);
 
 export default router;
