@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  addOnOffImage,
   addUsageHistory,
   getRealtimeDataSpecificAsset,
 } from "../controllers/usagehistory/addusagehistory.controller.js";
@@ -90,5 +91,7 @@ router
 router
   .route("/get-business-specific-asset-MTD/:assetId")
   .get(getCosnumptionSpecificAssetMTD);
+
+router.route("/add-on-off-status/:assetID").post(addOnOffImage);
 
 export default router;
