@@ -4,24 +4,28 @@ import {
   sendNotification,
   sendNotificationNew,
 } from "../controllers/notification.controller.js";
-import { addUsageHistory } from "../controllers/usagehistory/addusagehistory.controller.js";
-import { Asset } from "../models/asset.model.js";
 
-let issueNsp;
+let io;
+let connectedSocket;
 
 export function initializeNotificationSocket(io) {
   try {
     console.log("***** Io Notifcation started *****");
 
-    issueNsp = io.of("/home/notifications");
-
-    issueNsp.on("connection", (socket) => {
+    io.on("connection", (socket) => {
+      connectedSocket = socket;
       console.log("User Connected: ", socket.id);
 
       socket.on("user-joined", (username) => {
         socket.username = username;
         console.log(`User connected on home page: ${username}`);
         socket.join(username);
+      });
+
+      socket.on("message", (message) => {
+        console.log(`Received message: ${message}`);
+        // You can also broadcast this message to all connected clients if needed
+        io.emit("notification", message);
       });
 
       socket.on("disconnect", () => {
@@ -34,15 +38,26 @@ export function initializeNotificationSocket(io) {
       });
     });
 
-    return issueNsp;
+    return io;
   } catch (error) {
     console.error("Error initializing activity socket:", error);
     throw error;
   }
 }
 
+// it's used when particular socket to send notification or data
+export function getSocket() {
+  return connectedSocket;
+}
+
+// it's used when to broadcast to all the connected clients
+export function getIo() {
+  return io;
+}
+
 export async function emitNewNotificationEvent(userId, eventData) {
-  if (issueNsp) {
+  const currentSocket = getSocket();
+  if (currentSocket) {
     // console.log("This is event data : "  , eventData);
     if (
       !userId ||
@@ -71,7 +86,7 @@ export async function emitNewNotificationEvent(userId, eventData) {
 
     //  console.log("This is userid where notification is sent : " , userId);
 
-    issueNsp.to(userId).emit("new-notification", eventData);
+    currentSocket.to(userId).emit("new-notification", eventData);
 
     await sendNotificationNew(userId, eventData.content);
   } else {
@@ -87,7 +102,8 @@ export async function emitNewNotificationAndAddBusinessEvent(
   eventData,
   newBusiness
 ) {
-  if (issueNsp) {
+  const currentSocket = getSocket();
+  if (currentSocket) {
     console.log("This is event data : ", eventData, userId);
     if (
       !userId ||
@@ -126,9 +142,50 @@ export async function emitNewNotificationAndAddBusinessEvent(
     };
 
     // console.log("This is data }", data);
-    issueNsp.to(userId).emit("new-notification-add-business", data);
+    currentSocket.to(userId).emit("new-notification-add-business", data);
 
     sendNotificationNew(userId, eventData.content);
+  } else {
+    throw new Error(
+      "Socket.io not initialized. Call initializeActivitySocket(server) first."
+    );
+  }
+}
+
+export async function joinBusinessNotificationEvent(userId, eventData) {
+  const currentSocket = getSocket();
+  if (currentSocket) {
+    // console.log("This is event data : "  , eventData);
+    if (
+      !userId ||
+      !eventData ||
+      !eventData.content ||
+      !eventData.createdDate ||
+      !eventData.notificationCategory
+    ) {
+      return;
+    }
+
+    await User.updateOne(
+      { _id: userId },
+      {
+        $inc: {
+          acceptViewCounter: 1,
+        },
+      }
+    );
+
+    let data = await NotificationModel.create({ ...eventData, userId });
+
+    // console.log("this is data ", data);
+
+    //  console.log(result);
+
+    // console.log("This is userid where notification is sent : ", userId);
+
+    currentSocket.to(userId).emit("join-business-notification", eventData);
+
+    await sendNotificationNew(userId, eventData.content);
   } else {
     throw new Error(
       "Socket.io not initialized. Call initializeActivitySocket(server) first."
