@@ -1,22 +1,33 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import session from "express-session";
-// import dotenv from "dotenv";
 import cors from "cors";
 import bodyParser from "body-parser";
-import { createServer } from "http";
 import { Server } from "socket.io";
 import morgan from "morgan";
 import path from "path";
 import fs from "fs";
-// import swaggerUi from "swagger-ui-express";
 import { fileURLToPath } from "url";
 import YAML from "yaml";
 import sdk from "api";
 const sdkInstance = sdk("@msg91api/v5.0#6n91xmlhu4pcnz");
+import http from "http";
+import https from "https";
+import { connectDb } from "./db/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const sslKeyPath = path.join(__dirname, "../localhost.key");
+const sslCertPath = path.join(__dirname, "../localhost.crt");
+
+const privateKey = fs.readFileSync(sslKeyPath, "utf8");
+const certificate = fs.readFileSync(sslCertPath, "utf8");
+
+const options = {
+  key: privateKey,
+  cert: certificate,
+};
 
 const file = fs.readFileSync(
   path.resolve(__dirname, "../swagger.yaml"),
@@ -27,18 +38,6 @@ const file = fs.readFileSync(
 import { initializeNotificationSocket } from "./sockets/notification_socket.js";
 
 const app = express();
-const server = createServer(app);
-
-const io = new Server(server, {
-  cors: {
-    origin: ["*"],
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-});
-
-initializeNotificationSocket(io);
-initializeDataSocket(io);
 
 // Middleware
 if (process.env.NODE_ENV === "development") {
@@ -80,7 +79,6 @@ import uploadDocumentRoutes from "./routes/upload.document.routes.js";
 import uploadfileAWSRoutes from "./routes/upload.file.routes.js";
 import officeRoutes from "./routes/office.routes.js";
 import settingRoutes from "./routes/settings.routes.js";
-import { initializeDataSocket } from "./sockets/emit_data_socket.js";
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/user", userRoutes);
@@ -101,4 +99,44 @@ app.get("*", (req, res) => {
   });
 });
 
-export default app;
+const HTTP_PORT = process.env.HTTP_PORT || 80;
+const HTTPS_PORT = process.env.HTTPS_PORT || 443;
+const startServer = async () => {
+  try {
+    await connectDb();
+
+    const httpServer = http.createServer(app);
+
+    const httpsServer = https.createServer(options, app);
+
+    const ioHttp = new Server(httpServer, {
+      cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+      },
+    });
+
+    const ioHttps = new Server(httpsServer, {
+      cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+      },
+    });
+
+    initializeNotificationSocket(ioHttp);
+    initializeNotificationSocket(ioHttps);
+
+    httpServer.listen(HTTP_PORT, () => {
+      console.log(`HTTP Server running on http://localhost:${HTTP_PORT}`);
+    });
+
+    httpsServer.listen(HTTPS_PORT, () => {
+      console.log(`HTTPS Server running on https://localhost:${HTTPS_PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to start the server:", error);
+    process.exit(1);
+  }
+};
+
+startServer();

@@ -245,6 +245,9 @@ const createAsset = asyncHandler(async (req, res) => {
     business.assets.push({ name, modelNumber, assetId: asset._id });
     await business.save({ session });
 
+
+    
+
     await session.commitTransaction();
     session.endSession();
 

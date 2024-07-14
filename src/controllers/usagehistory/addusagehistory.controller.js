@@ -6,8 +6,6 @@ import { BusinessUsers } from "../../models/businessusers.model.js";
 import { UsageHistory } from "../../models/usagehistory.model.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { User } from "../../models/user.model.js";
-import { emitRealtimeData } from "../../sockets/emit_data_socket.js";
-import { emitAssetSpecificRealtimeData } from "./emitassetspecificdata.controller.js";
 
 const addUsageHistory = asyncHandler(async (req, res) => {
   try {

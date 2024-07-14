@@ -17,7 +17,7 @@ const router = Router();
 
 router.use(verifyJWT);
 
-// create join business
+// create business
 router.route("/create-business").post(createBusiness);
 
 // update business details
