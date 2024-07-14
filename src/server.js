@@ -124,7 +124,7 @@ const startServer = async () => {
     });
 
     initializeNotificationSocket(ioHttp);
-    initializeNotificationSocket(ioHttps);
+    // initializeNotificationSocket(ioHttps);
 
     httpServer.listen(HTTP_PORT, () => {
       console.log(`HTTP Server running on http://localhost:${HTTP_PORT}`);
