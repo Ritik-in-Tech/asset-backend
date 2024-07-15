@@ -71,7 +71,7 @@ export async function emitNewNotificationEvent(userId, eventData) {
 
     //  console.log("This is userid where notification is sent : " , userId);
 
-    issueNsp.to(userId).emit("new-notification", eventData);
+    issueNsp.to(userId.toString()).emit("new-notification", eventData);
 
     sendNotificationNew(userId, eventData.content);
   } else {
@@ -126,7 +126,7 @@ export async function emitNewNotificationAndAddBusinessEvent(
     };
 
     // console.log("This is data }", data);
-    issueNsp.to(userId).emit("new-notification-add-business", data);
+    issueNsp.to(userId.toString()).emit("new-notification-add-business", data);
 
     sendNotificationNew(userId, eventData.content);
   } else {
@@ -166,7 +166,9 @@ export async function joinBusinessNotificationEvent(userId, eventData) {
 
     // console.log("This is userid where notification is sent : ", userId);
 
-    issueNsp.to(userId).emit("join-business-notification", eventData);
+    issueNsp
+      .to(userId.toString())
+      .emit("join-business-notification", eventData);
 
     await sendNotificationNew(userId, eventData.content);
   } else {
