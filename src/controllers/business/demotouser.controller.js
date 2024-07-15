@@ -107,7 +107,7 @@ export const demoteUser = asyncHandler(async (req, res, next) => {
     }
 
     const emitData = {
-      content: `Your role in business ${business.name} has been demoted to User`,
+      content: `Your role in business ${business.name} has been demoted to Operator`,
       notificationCategory: "business",
       createdDate: getCurrentIndianTime(),
       businessName: business.name,
