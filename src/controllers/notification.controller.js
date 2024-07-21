@@ -3,6 +3,10 @@ import { User } from "../models/user.model.js";
 import { fileURLToPath } from "url";
 import path from "path";
 import admin from "firebase-admin";
+import dotenv from "dotenv";
+import fs from "fs";
+
+dotenv.config();
 
 export async function sendNotification(userId, body) {
   try {
@@ -69,12 +73,30 @@ export async function sendNotification(userId, body) {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const serviceKeyPath = path.join(__dirname, "../../service_key.json");
+const serviceKeyPath = process.env.SERVICE_KEY;
+
+if (!serviceKeyPath) {
+  throw new Error("SERVICE_KEY is not set in the environment");
+}
+
+const projectRoot = path.resolve(__dirname, "../..");
+const fullServiceKeyPath = path.join(projectRoot, serviceKeyPath);
+
+// console.log(fullServiceKeyPath);
+
+// Read and parse the service account file
+let serviceAccount;
+try {
+  const serviceAccountFile = fs.readFileSync(fullServiceKeyPath, "utf8");
+  serviceAccount = JSON.parse(serviceAccountFile);
+} catch (error) {
+  console.error("Error reading service account file:", error);
+  throw error;
+}
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceKeyPath),
+  credential: admin.credential.cert(serviceAccount),
 });
-
 export async function sendNotificationNew(userId, body) {
   try {
     if (!userId || !body) {

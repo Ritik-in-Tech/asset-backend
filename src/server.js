@@ -14,15 +14,30 @@ const sdkInstance = sdk("@msg91api/v5.0#6n91xmlhu4pcnz");
 import http from "http";
 import https from "https";
 import { connectDb } from "./db/index.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const sslKeyPath = path.join(__dirname, "../localhost.key");
-const sslCertPath = path.join(__dirname, "../localhost.crt");
+const sslKeyPath = process.env.SSL_KEY_PATH;
+const sslCertPath = process.env.SSL_CERT_PATH;
 
-const privateKey = fs.readFileSync(sslKeyPath, "utf8");
-const certificate = fs.readFileSync(sslCertPath, "utf8");
+const projectRoot = path.resolve(__dirname, "..");
+const fullSslKeyPath = path.join(projectRoot, sslKeyPath);
+const fullSslCertPath = path.join(projectRoot, sslCertPath);
+
+let privateKey, certificate;
+try {
+  privateKey = fs.readFileSync(fullSslKeyPath, "utf8");
+  // console.log("The private key is: ", privateKey);
+  certificate = fs.readFileSync(fullSslCertPath, "utf8");
+  // console.log("The certificate is: ", certificate);
+} catch (error) {
+  console.error("Error reading SSL files:", error);
+  throw error;
+}
 
 const options = {
   key: privateKey,
