@@ -25,7 +25,7 @@ jobs:
             --build-arg OPENSSL_CNF_CONTENT='${{ secrets.OPENSSL_CNF_CONTENT }}' \
             --build-arg SSL_KEY_CONTENT='${{ secrets.SSL_KEY_CONTENT }}' \
             --build-arg SSL_CERT_CONTENT='${{ secrets.SSL_CERT_CONTENT }}' \
-          docker build -t ritik819/asset-backend .
+            -t ritik819/asset-backend:latest .
 
       - name: Publish Image to Docker Hub
         run: docker push ritik819/asset-backend:latest
