@@ -19,7 +19,13 @@ jobs:
           password: "${{ secrets.DOCKER_PASSWORD }}"
 
       - name: Build Docker Image
-        run: docker build -t ritik819/asset-backend .
+        run: |
+          docker build \
+            --build-arg SERVICE_KEY_CONTENT='${{ secrets.SERVICE_KEY_CONTENT }}' \
+            --build-arg OPENSSL_CNF_CONTENT='${{ secrets.OPENSSL_CNF_CONTENT }}' \
+            --build-arg SSL_KEY_CONTENT='${{ secrets.SSL_KEY_CONTENT }}' \
+            --build-arg SSL_CERT_CONTENT='${{ secrets.SSL_CERT_CONTENT }}' \
+          docker build -t ritik819/asset-backend .
 
       - name: Publish Image to Docker Hub
         run: docker push ritik819/asset-backend:latest
@@ -56,7 +62,11 @@ jobs:
               -e AWS_SECRET_KEY='${{secrets.AWS_SECRET_KEY}}' \
               -e HTTPS_PORT='${{secrets.HTTPS_PORT}}' \
               -e HTTP_PORT='${{secrets.HTTP_PORT}}' \
-              ritik819/asset-backend:latest
+              -e SERVICE_KEY="/secure_files/service_key.json" \
+              -e OPENSSL_CNF_PATH="/secure_files/openssl.cnf" \
+              -e SSL_KEY_PATH="/secure_files/localhost.key" \
+              -e SSL_CERT_PATH="/secure_files/localhost.crt" \
+                ritik819/asset-backend:latest
 
       - name: Clean up old images
         run: sudo docker image prune -af
